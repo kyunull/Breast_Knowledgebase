@@ -102,7 +102,9 @@ def test_ingest_keeps_draft_unsearchable_and_approval_supersedes_atomically() ->
     first = lifecycle.ingest(_request(root, "nccn-v1", "1.2026", "First evidence"), actor="importer")
 
     assert first.status is VersionStatus.DRAFT
-    assert first.snapshot_path == str(root / "indices" / "nccn" / "nccn-v1")
+    assert first.snapshot_path == (
+        root / "indices" / "nccn" / "nccn-v1"
+    ).relative_to(PROJECT_ROOT).as_posix()
     assert first.snapshot_manifest_sha256 is not None
     assert registry.list_searchable_versions() == []
     assert registry.count_rows("raw_chunk") == 1

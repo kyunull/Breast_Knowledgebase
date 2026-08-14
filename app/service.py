@@ -31,6 +31,12 @@ class GuidelineService:
         os.environ.update(self.settings.runtime_environment())
         self.registry = Registry(self.settings.registry_db_path)
         self.registry.initialize()
+        self.registry.rebase_runtime_paths(
+            project_root=self.settings.project_root,
+            managed_sources_dir=self.settings.managed_sources_dir,
+            index_root=self.settings.index_root,
+            actor="system",
+        )
         self._embed_model = embed_model
         self._model_metadata = dict(model_metadata or self._default_model_metadata())
         self._index_store: IndexSnapshotStore | None = None
@@ -64,6 +70,7 @@ class GuidelineService:
             self._retriever = EvidenceRetriever(
                 registry=self.registry,
                 index_store=self.index_store,
+                resolve_project_path=self.settings.resolve_project_path,
             )
         return self._retriever
 
@@ -134,7 +141,7 @@ class GuidelineService:
             guideline_id=version.guideline_id,
             version_id=version.id,
             index_id=f"{version.guideline_id}:{version.id}",
-            path=Path(version.snapshot_path),
+            path=self.settings.resolve_project_path(version.snapshot_path),
             node_count=self.registry.count_nodes_for_version(version.id),
             manifest_sha256=version.snapshot_manifest_sha256,
         )

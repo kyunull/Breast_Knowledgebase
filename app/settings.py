@@ -112,6 +112,17 @@ class Settings:
             environment["HF_HUB_OFFLINE"] = "1"
         return environment
 
+    def resolve_project_path(self, value: str | Path) -> Path:
+        path = Path(value)
+        if not path.is_absolute():
+            path = self.project_root / path
+        resolved = path.resolve()
+        if not resolved.is_relative_to(self.project_root):
+            raise PathOutsideProjectError(
+                f"path must resolve below the project root: {self.project_root}"
+            )
+        return resolved
+
 
 def _project_path(name: str, default: Path, project_root: Path) -> Path:
     value = os.getenv(name)

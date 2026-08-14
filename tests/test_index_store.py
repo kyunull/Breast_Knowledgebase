@@ -21,7 +21,7 @@ from app.index_store import (
 
 
 def _task_dir() -> Path:
-    path = Path(r"D:\coding\knowledgebase\data\runtime_cache\test_task3") / uuid4().hex
+    path = Path(__file__).resolve().parents[1] / "data" / "runtime_cache" / "test_task3" / uuid4().hex
     path.mkdir(parents=True)
     return path
 

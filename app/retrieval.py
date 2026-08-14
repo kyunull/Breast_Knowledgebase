@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Callable, Iterable, Sequence
 
 from llama_index.core.schema import BaseNode, NodeWithScore
 
@@ -21,9 +21,16 @@ except ImportError:  # Vector retrieval remains an explicit, observable baseline
 class EvidenceRetriever:
     """Retrieve version-scoped source evidence without response synthesis or an LLM."""
 
-    def __init__(self, *, registry: Registry, index_store: IndexSnapshotStore) -> None:
+    def __init__(
+        self,
+        *,
+        registry: Registry,
+        index_store: IndexSnapshotStore,
+        resolve_project_path: Callable[[str | Path], Path] | None = None,
+    ) -> None:
         self._registry = registry
         self._index_store = index_store
+        self._resolve_project_path = resolve_project_path or Path
 
     def search(self, request: SearchRequest) -> SearchResponse:
         versions = self._resolve_versions(request)
@@ -93,7 +100,7 @@ class EvidenceRetriever:
             guideline_id=version.guideline_id,
             version_id=version.id,
             index_id=f"{version.guideline_id}:{version.id}",
-            path=Path(version.snapshot_path),
+            path=self._resolve_project_path(version.snapshot_path),
             node_count=self._registry.count_nodes_for_version(version.id),
             manifest_sha256=version.snapshot_manifest_sha256,
         )

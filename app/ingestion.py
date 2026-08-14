@@ -86,13 +86,17 @@ def copy_and_register_sources(
     *,
     registry: Registry,
     version_id: str,
+    project_root: Path,
     managed_sources_dir: Path,
     sources: Iterable[ManagedSourceInput],
     actor: str,
 ) -> list[SourceFileRecord]:
     """Create immutable managed copies and register their byte-level provenance."""
     _require_safe_path_component(version_id, "version_id")
+    root = Path(project_root).resolve()
     managed_root = Path(managed_sources_dir).resolve()
+    if not managed_root.is_relative_to(root):
+        raise ValueError("managed source root must remain below the project root")
     destination_root = (managed_root / version_id).resolve()
     if not destination_root.is_relative_to(managed_root):
         raise ValueError("managed source destination must remain below the managed source root")
@@ -119,7 +123,7 @@ def copy_and_register_sources(
             version_id=version_id,
             source_kind=source.source_kind,
             original_path=str(original_path),
-            managed_path=str(destination.resolve()),
+            managed_path=destination.relative_to(root).as_posix(),
             sha256=sha256(source_bytes).hexdigest(),
             byte_size=len(source_bytes),
             provenance_json=json.dumps(dict(source.provenance), ensure_ascii=False, sort_keys=True),

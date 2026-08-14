@@ -13,7 +13,7 @@ from app.diffing import VersionDiffer, normalize_text, normalized_text_sha256
 from app.registry import Registry
 
 
-PROJECT_ROOT = Path(r"D:\coding\knowledgebase")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _registry() -> Registry:

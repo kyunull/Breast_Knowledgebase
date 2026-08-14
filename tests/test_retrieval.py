@@ -26,7 +26,7 @@ from app.retrieval import EvidenceRetriever, rrf_merge
 import app.retrieval as retrieval_module
 
 
-PROJECT_ROOT = Path(r"D:\coding\knowledgebase")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 class TerminologyEmbedding(BaseEmbedding):

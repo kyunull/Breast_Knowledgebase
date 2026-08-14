@@ -20,11 +20,12 @@ from app.registry import Registry
 
 
 FIXTURES = Path(__file__).parent / "fixtures"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture
 def task_dir() -> Path:
-    value = Path(r"D:\coding\knowledgebase\data\runtime_cache\test_task2") / uuid4().hex
+    value = PROJECT_ROOT / "data" / "runtime_cache" / "test_task2" / uuid4().hex
     value.mkdir(parents=True)
     return value
 
@@ -98,6 +99,7 @@ def test_copy_and_register_sources_is_byte_identical_and_keeps_original_unchange
     records = copy_and_register_sources(
         registry=registry,
         version_id="nccn-v6",
+        project_root=task_dir,
         managed_sources_dir=task_dir / "managed",
         sources=(
             ManagedSourceInput(
@@ -112,7 +114,7 @@ def test_copy_and_register_sources_is_byte_identical_and_keeps_original_unchange
 
     assert original.read_bytes() == original_bytes
     assert records[0].managed_path != str(original)
-    assert Path(records[0].managed_path).read_bytes() == original_bytes
+    assert (task_dir / records[0].managed_path).read_bytes() == original_bytes
     assert records[0].sha256 == hashlib.sha256(original_bytes).hexdigest()
     assert registry.count_rows("source_file") == 1
 
@@ -129,6 +131,7 @@ def test_copy_and_register_sources_rejects_path_components_that_escape_managed_r
         copy_and_register_sources(
             registry=registry,
             version_id=version_id,
+            project_root=task_dir,
             managed_sources_dir=managed_root,
             sources=(
                 ManagedSourceInput(

@@ -350,6 +350,86 @@ class Registry:
             self._record_audit(connection, actor, "version_archived", "document_version", version_id, {})
         return self.get_version(version_id)
 
+    def rebase_runtime_paths(
+        self,
+        *,
+        project_root: Path,
+        managed_sources_dir: Path,
+        index_root: Path,
+        actor: str,
+    ) -> int:
+        root = Path(project_root).resolve()
+        managed_root = Path(managed_sources_dir).resolve()
+        snapshot_root = Path(index_root).resolve()
+        for runtime_root in (managed_root, snapshot_root):
+            if not runtime_root.is_relative_to(root):
+                raise ValueError(
+                    f"runtime path must remain below project root: {runtime_root}"
+                )
+
+        with self.transaction() as connection:
+            version_rows = connection.execute(
+                """
+                SELECT id, guideline_id, snapshot_path
+                FROM document_version
+                WHERE snapshot_path IS NOT NULL
+                ORDER BY id
+                """
+            ).fetchall()
+            source_rows = connection.execute(
+                """
+                SELECT id, document_version_id, managed_path
+                FROM source_file
+                ORDER BY id
+                """
+            ).fetchall()
+
+            snapshot_updates: list[tuple[str, str]] = []
+            source_updates: list[tuple[str, str]] = []
+            for row in version_rows:
+                stored = Path(row["snapshot_path"])
+                if not stored.is_absolute():
+                    continue
+                target = (snapshot_root / row["guideline_id"] / row["id"]).resolve()
+                if not target.is_relative_to(root) or not target.is_dir():
+                    raise FileNotFoundError(
+                        f"snapshot target missing for version {row['id']}: {target}"
+                    )
+                snapshot_updates.append((target.relative_to(root).as_posix(), row["id"]))
+
+            for row in source_rows:
+                stored = Path(row["managed_path"])
+                if not stored.is_absolute():
+                    continue
+                target = (
+                    managed_root / row["document_version_id"] / stored.name
+                ).resolve()
+                if not target.is_relative_to(root) or not target.is_file():
+                    raise FileNotFoundError(
+                        f"managed source target missing for source {row['id']}: {target}"
+                    )
+                source_updates.append((target.relative_to(root).as_posix(), row["id"]))
+
+            connection.executemany(
+                "UPDATE document_version SET snapshot_path = ? WHERE id = ?",
+                snapshot_updates,
+            )
+            connection.executemany(
+                "UPDATE source_file SET managed_path = ? WHERE id = ?",
+                source_updates,
+            )
+            path_count = len(snapshot_updates) + len(source_updates)
+            if path_count:
+                self._record_audit(
+                    connection,
+                    actor,
+                    "project_paths_rebased",
+                    "project",
+                    "runtime_paths",
+                    {"path_count": path_count},
+                )
+        return path_count
+
     def get_version(self, version_id: str) -> VersionRecord:
         with self.connect() as connection:
             row = connection.execute(

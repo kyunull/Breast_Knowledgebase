@@ -63,6 +63,7 @@ class GuidelineLifecycle:
             source_records = copy_and_register_sources(
                 registry=self._registry,
                 version_id=version.id,
+                project_root=self._project_root,
                 managed_sources_dir=self._managed_sources_dir,
                 sources=request.sources,
                 actor=actor,
@@ -71,7 +72,8 @@ class GuidelineLifecycle:
             jsonl_source = records_by_id[request.jsonl_source_id]
             citation_source = records_by_id[request.citation_source_id]
             raw_chunks = read_jsonl(
-                Path(jsonl_source.managed_path), source_file_id=jsonl_source.id
+                self._resolve_project_path(jsonl_source.managed_path),
+                source_file_id=jsonl_source.id,
             )
             self._registry.add_raw_chunks(raw_chunks, actor=actor)
             nodes = self._node_builder.build(
@@ -111,7 +113,7 @@ class GuidelineLifecycle:
             self._index_store.verify(snapshot)
             version = self._registry.set_draft_snapshot(
                 version.id,
-                snapshot_path=str(snapshot.path),
+                snapshot_path=snapshot.path.relative_to(self._project_root).as_posix(),
                 snapshot_manifest_sha256=snapshot.manifest_sha256,
                 actor=actor,
             )
@@ -144,7 +146,7 @@ class GuidelineLifecycle:
                 guideline_id=version.guideline_id,
                 version_id=version.id,
                 index_id=f"{version.guideline_id}:{version.id}",
-                path=Path(version.snapshot_path),
+                path=self._resolve_project_path(version.snapshot_path),
                 node_count=self._registry.count_nodes_for_version(version.id),
                 manifest_sha256=version.snapshot_manifest_sha256,
             )
@@ -177,6 +179,12 @@ class GuidelineLifecycle:
         if not resolved.is_relative_to(self._project_root):
             raise ValueError(f"writable path must remain below project root: {self._project_root}")
         return resolved
+
+    def _resolve_project_path(self, value: str | Path) -> Path:
+        path = Path(value)
+        if not path.is_absolute():
+            path = self._project_root / path
+        return self._require_project_path(path)
 
     @staticmethod
     def _validate_request(
