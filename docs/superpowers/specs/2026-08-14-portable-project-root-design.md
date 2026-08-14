@@ -1,5 +1,7 @@
 # 可移动项目根目录设计
 
+> 实现状态（2026-08-14）：项目根目录已改为动态发现；运行时路径支持相对持久化和旧绝对路径事务迁移；本地 pinned BGE-M3 与显式远程 OpenAI-compatible embeddings 两种模式均已实现。当前运维命令以 README 和 `docs/operations/local-runbook.md` 为准。
+
 日期：2026-08-14
 
 ## 目标
