@@ -26,6 +26,7 @@ def clean_kb_environment():
 def test_service_accepts_relocated_non_d_project_root() -> None:
     with tempfile.TemporaryDirectory() as temporary_root:
         root = Path(temporary_root).resolve()
+        assert root.drive.upper() != "D:"
         with clean_kb_environment():
             settings = Settings.from_env(root)
 

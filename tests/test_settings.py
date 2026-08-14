@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
 
@@ -10,25 +11,18 @@ from app.settings import PathOutsideProjectError, Settings
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-PATH_ENVIRONMENT_VARIABLES = (
-    "KB_DATA_DIR",
-    "KB_REGISTRY_DB_PATH",
-    "KB_MANAGED_SOURCES_DIR",
-    "KB_INDEX_ROOT",
-    "KB_MODEL_CACHE_DIR",
-    "KB_RUNTIME_CACHE_DIR",
-    "KB_MODEL_REVISION",
-    "KB_MODEL_LOCAL_FILES_ONLY",
-)
-
-
 class SettingsTests(unittest.TestCase):
+    @contextmanager
     def clean_environment(self):
-        return patch.dict(
-            os.environ,
-            {name: "" for name in PATH_ENVIRONMENT_VARIABLES},
-            clear=False,
-        )
+        original = {
+            name: value for name, value in os.environ.items() if name.startswith("KB_")
+        }
+        for name in original:
+            os.environ.pop(name)
+        try:
+            yield
+        finally:
+            os.environ.update(original)
 
     def test_rejects_c_drive_data_directory(self) -> None:
         with self.clean_environment(), patch.dict(
@@ -98,6 +92,26 @@ class SettingsTests(unittest.TestCase):
             "5617a9f61b028005a4858fdac845db406aefb181",
             settings.model_revision,
         )
+
+    def test_clean_environment_prevents_ambient_model_defaults_from_leaking(self) -> None:
+        with patch.dict(
+            os.environ,
+            {
+                "KB_MODEL_NAME": "ambient-model",
+                "KB_MODEL_DEVICE": "cuda",
+                "KB_MODEL_MAX_SEQ_LENGTH": "1024",
+                "KB_EMBEDDING_BATCH_SIZE": "8",
+                "KB_BM25_ENABLED": "false",
+            },
+            clear=False,
+        ), self.clean_environment():
+            settings = Settings.from_env(PROJECT_ROOT)
+
+        self.assertEqual("BAAI/bge-m3", settings.model_name)
+        self.assertEqual("cpu", settings.model_device)
+        self.assertEqual(512, settings.model_max_seq_length)
+        self.assertEqual(4, settings.embedding_batch_size)
+        self.assertTrue(settings.bm25_enabled)
 
     def test_model_revision_environment_override_is_preserved(self) -> None:
         with self.clean_environment(), patch.dict(
