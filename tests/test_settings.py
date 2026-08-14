@@ -9,7 +9,7 @@ from unittest.mock import patch
 from app.settings import PathOutsideProjectError, Settings
 
 
-PROJECT_ROOT = Path(r"D:\coding\knowledgebase").resolve()
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PATH_ENVIRONMENT_VARIABLES = (
     "KB_DATA_DIR",
     "KB_REGISTRY_DB_PATH",
@@ -17,6 +17,7 @@ PATH_ENVIRONMENT_VARIABLES = (
     "KB_INDEX_ROOT",
     "KB_MODEL_CACHE_DIR",
     "KB_RUNTIME_CACHE_DIR",
+    "KB_MODEL_REVISION",
     "KB_MODEL_LOCAL_FILES_ONLY",
 )
 
