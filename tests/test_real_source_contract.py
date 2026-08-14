@@ -17,11 +17,14 @@ SOURCE_ROOT = Path(
 EXPECTED_COUNTS = {
     "caca_2026.jsonl": 324,
     "gradishar_nccn_v4_2026.jsonl": 9,
-    "nccn_v6_2026.jsonl": 786,
+    "nccn_v6_2026.jsonl": 822,
     "oncotoolkit_her2_2026.jsonl": 31,
 }
 EXPECTED_CACA_SHA256 = (
     "983e26188f574a8200f367347175e2bfb79c4d430ffd0b26fc2a5187fc62d1f5"
+)
+EXPECTED_NCCN_SHA256 = (
+    "8f04b5f19e710948daff64ffa50d1767a6c3ffca9393c9488d933d285f1a7e3b"
 )
 
 
@@ -84,10 +87,11 @@ def test_user_supplied_jsonl_files_meet_the_recorded_source_contract() -> None:
     )
 
     assert report["files"]["caca_2026.jsonl"]["sha256"] == EXPECTED_CACA_SHA256
+    assert report["files"]["nccn_v6_2026.jsonl"]["sha256"] == EXPECTED_NCCN_SHA256
     assert {
         name: entry["record_count"] for name, entry in report["files"].items()
     } == EXPECTED_COUNTS
-    assert report["total_records"] == 1150
+    assert report["total_records"] == 1186
     assert report["all_chunk_ids_unique"] is True
     assert all(entry["missing_required_fields"] == [] for entry in report["files"].values())
     assert report_path.is_file()

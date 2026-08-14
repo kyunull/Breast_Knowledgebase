@@ -8,22 +8,28 @@
 
 | 指南 | 版本 ID | 状态 | 分块/节点 | 来源等级 |
 | --- | --- | --- | ---: | --- |
-| CACA 乳腺癌指南 | `caca-breast-cancer-2026` | `active` | 270 | `primary_guideline` |
+| CACA 原生效版本 | `caca-breast-cancer-2026` | `superseded` | 270 | `primary_guideline` |
 | CACA 中间审计版本 | `caca-breast-cancer-2026-r2` | `draft` | 324 | `primary_guideline` |
-| CACA 当前审核候选 | `caca-breast-cancer-2026-r3` | `draft` | 324 | `primary_guideline` |
+| CACA 当前生效版本 | `caca-breast-cancer-2026-r3` | `active` | 324 | `primary_guideline` |
 | Gradishar NCCN Breast Cancer | `gradishar-nccn-breast-cancer-4-2026` | `draft` | 9 | `primary_publication` |
-| NCCN Breast Cancer | `nccn-breast-cancer-6-2026` | `draft` | 786 | `primary_guideline` |
+| NCCN Breast Cancer 历史草稿 | `nccn-breast-cancer-6-2026` | `draft` | 786 | `primary_guideline` |
+| NCCN Breast Cancer 更新草稿 | `nccn-breast-cancer-6-2026-r2` | `draft` | 822 | `primary_guideline` |
 | OncoToolkit HER2 Breast Cancer | `oncotoolkit-her2-breast-cancer-2026` | `draft` | 31 | `secondary_summary` |
 
-当前数据库实测：4 个 guideline、6 个 version、1,744 个 raw chunk、1,744 个索引节点、882 条版本差异和 3,526 条追加式审计事件，其中 1 条是本次 `project_paths_rebased`。交付数据包迁移前的审计基线为 3,525 条。节点总数包含三个 CACA 历史/候选版本。
+当前数据库实测：4 个 guideline、7 个 version、2,566 个 raw chunk、2,566 个索引节点、2,024 条版本差异和 5,177 条追加式审计事件。节点总数包含 CACA 和 NCCN 的历史/候选版本。
 
-默认检索只包含 `active`，因此目前仍只返回原 CACA 2026。CACA r2 是不可变的中间审计记录，保留但不批准。CACA r3 是唯一可考虑替换当前 CACA active 的候选。NCCN、Gradishar 和 OncoToolkit 必须分别审核，互不覆盖；Gradishar 不是 NCCN V6 的历史版本，OncoToolkit 始终是 `secondary_summary`。
+默认检索只包含 `active`，因此目前只返回 CACA r3。原 CACA 2026 已变为 `superseded`，CACA r2 仍是保留但不批准的中间审计记录。NCCN r2、Gradishar 和 OncoToolkit 必须分别审核，互不覆盖；旧 NCCN 草稿保留用于版本对比，不应批准。Gradishar 不是 NCCN V6 的历史版本，OncoToolkit 始终是 `secondary_summary`。
 
 ## 已验证能力
 
 - CACA r3 的中文与英文 HER2 查询均命中 CACA 原文证据，并返回 `raw_chunk_id` 和 PDF 页码。
 - CACA r3 托管 JSONL 为 324 条，SHA-256 为 `983e26188f574a8200f367347175e2bfb79c4d430ffd0b26fc2a5187fc62d1f5`。
 - CACA r3 快照可在固定 revision 的本地 BGE-M3 模式下重新打开并校验 manifest。
+- CACA r3 已由审核人 `dongy` 批准为 `active`，原 CACA 2026 已原子更新为 `superseded`。
+- NCCN r2 托管 JSONL 为 822 条，SHA-256 为 `8f04b5f19e710948daff64ffa50d1767a6c3ffca9393c9488d933d285f1a7e3b`；PDF SHA-256 为 `9d7bac09e03956dbe875516c23a6cfbfea05507a33a145f8e66474f3cfe00820`。
+- NCCN r2 快照 manifest 为 `3f5f06689a27f76e28dbb965fd3e5426bad97ffbc7ae06fa681d603ccd41053b`，可用固定 revision 的本地 BGE-M3 重新打开。
+- 旧 NCCN 草稿到 r2 共记录 1,142 条版本差异：356 条新增、320 条删除、348 条修改、118 条不变。
+- NCCN r2 的英文 HER2 查询命中 NCCN 原文，并返回 `raw_chunk_id`、来源等级和 PDF 页码元数据。
 - 新导入的托管源和快照路径以项目相对路径保存；旧绝对路径会在文件完整时事务迁移。
 - 本地模式固定 `BAAI/bge-m3` revision `5617a9f61b028005a4858fdac845db406aefb181`。
 - 远程模式支持 OpenAI-compatible `/embeddings`，并校验 provider、模型名、维度、归一化、响应数量和响应顺序。
@@ -32,10 +38,10 @@
 
 ## 审核顺序
 
-1. 审核 CACA r3 的 324 条托管 JSONL、PDF 引用、版本差异和抽样查询；不要批准 r2。
-2. 启动 API，确认默认检索仍只返回原 CACA 2026，显式检索 r3 draft 返回 HTTP 422。
-3. 若 r3 审核通过，以真实审核人 ID 批准；批准后原 CACA active 会变为 `superseded`。
-4. 分别处理 NCCN、Gradishar 和 OncoToolkit。上游 NCCN/Gradishar 数量与当前 draft 不一致时，先导入新版本，不直接批准旧 draft。
+1. CACA r3 已完成审批；复核默认检索只解析到 `caca-breast-cancer-2026-r3`，不要批准 r2。
+2. 审核 NCCN r2 的 822 条托管 JSONL、PDF 引用、版本差异和抽样查询；保留旧 NCCN 草稿但不要批准。
+3. 启动 API，确认显式检索 NCCN r2 draft 返回 HTTP 422；审核通过后再以真实审核人 ID 批准 r2。
+4. 分别处理 Gradishar 和 OncoToolkit。上游 Gradishar 数量与当前 draft 不一致时，先导入新版本，不直接批准旧 draft。
 
 批准示例：
 
@@ -43,7 +49,7 @@
 $body = @{ reviewer = 'team-reviewer-id' } | ConvertTo-Json
 Invoke-RestMethod `
   -Method Post `
-  -Uri http://127.0.0.1:8000/versions/caca-breast-cancer-2026-r3/approve `
+  -Uri http://127.0.0.1:8000/versions/nccn-breast-cancer-6-2026-r2/approve `
   -ContentType application/json `
   -Body $body
 ```
@@ -59,6 +65,10 @@ Invoke-RestMethod `
 - 严格自动化测试：`111 passed, 1 skipped`。
 - 默认 skip 是需要开发机原始资料的完整真实源契约测试。
 - CACA r3 单源契约：324 条、必填字段完整、`chunk_id` 唯一、固定 SHA-256 一致。
-- 最新检查中，上游 NCCN 为 822 条而当前 draft 为 786 条；上游 Gradishar 为 8 条而当前 draft 为 9 条；OncoToolkit 31 条及哈希未变化。
+- NCCN r2 单源契约：822 条、必填字段完整、`chunk_id` 唯一、固定 SHA-256 一致。
+- 启用完整真实源契约后，NCCN 已满足新契约；当前唯一失败是尚未重新导入的 Gradishar 上游文件为 8 条、数据库草稿为 9 条。
+- 最新检查中，NCCN r2 已按上游 822 条重新导入；上游 Gradishar 为 8 条而当前 draft 为 9 条；OncoToolkit 31 条及哈希未变化。
+
+现有私有 Release `v0.1.0-internal-test` 的数据包仍是上一轮交付基线，本次运行时数据尚未重新打包发布。
 
 完整命令和停止条件见 [本地运行手册](local-runbook.md)。
