@@ -58,11 +58,12 @@ KB_EMBEDDING_PROVIDER=remote
 KB_EMBEDDING_BASE_URL=https://embedding.example.com/v1
 KB_EMBEDDING_API_KEY=<只在当前进程环境中提供>
 KB_EMBEDDING_MODEL=BAAI/bge-m3
+KB_EMBEDDING_DIMENSION=1024
 ```
 
 `base_url` 可指向团队批准的云服务或内部网关。非本机的远程地址必须使用 HTTPS；本机测试服务可以使用回环地址的 HTTP。客户端负责批量提交输入、解析 `data[].embedding`、保留输入顺序，并使用有限次数重试处理暂时性网络错误。错误消息和日志不得包含 API key 或完整 Authorization 头。
 
-每个新建 LlamaIndex 快照的 manifest 增加嵌入提供方、模型标识、向量维度和归一化约定。旧 manifest 没有这些字段时按现有固定 revision 的本地 BGE-M3 解释，并在下一次重建时补齐。加载快照或执行查询前校验这些字段；维度不一致、缺少 API key、返回数量与输入数量不一致或返回非数值向量时立即失败并说明修复方向。远程 BGE-M3 与已有本地 BGE-M3 快照只有在维度和模型契约兼容时才允许查询；若远程服务权重或归一化策略不同，应使用远程模式重新建索引。
+每个新建 LlamaIndex 快照的 manifest 增加嵌入提供方、模型标识、向量维度和归一化约定。旧 manifest 没有这些字段时按现有固定 revision 的本地 BGE-M3 解释，并在下一次重建时补齐。远程模式要求 `KB_EMBEDDING_DIMENSION`，BGE-M3 默认是 1024；客户端会同时校验配置维度和服务返回维度。加载快照或执行查询前校验这些字段；维度不一致、缺少 API key、返回数量与输入数量不一致或返回非数值向量时立即失败并说明修复方向。远程 BGE-M3 与已有本地 BGE-M3 快照只有在维度和模型契约兼容时才允许查询；若远程服务权重或归一化策略不同，应使用远程模式重新建索引。
 
 远程 API 不改变证据返回结构，也不产生答案文本。默认模式仍为本地离线模型，远程模式必须显式开启；API key 缺失时不能静默回退到本地或反过来切换。
 
