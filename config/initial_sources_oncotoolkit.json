@@ -1,0 +1,41 @@
+{
+  "actor": "initial-import",
+  "guideline": {
+    "id": "oncotoolkit-her2-breast-cancer",
+    "title": "HER2+ Breast Cancer Treatment Guidelines 2026 (OncoToolkit summary)",
+    "title_zh": null,
+    "publisher": "OncoToolkit",
+    "language": "en",
+    "authority_level": "secondary_summary"
+  },
+  "version": {
+    "id": "oncotoolkit-her2-breast-cancer-2026",
+    "guideline_id": "oncotoolkit-her2-breast-cancer",
+    "version_label": "2026",
+    "published_at": null
+  },
+  "language": "en",
+  "authority_level": "secondary_summary",
+  "sources": [
+    {
+      "id": "oncotoolkit-her2-2026-html",
+      "path": "D:\\document\\HER2乳腺癌专病demo项目\\HER2+ Breast Cancer Treatment Guidelines 2026 _ OncoToolkit.html",
+      "source_kind": "html",
+      "provenance": {
+        "role": "citation_source",
+        "source_relationship": "citation_original"
+      }
+    },
+    {
+      "id": "oncotoolkit-her2-2026-jsonl",
+      "path": "D:\\document\\HER2乳腺癌专病demo项目\\pipeline\\标准文档分块解析\\oncotoolkit_her2_2026.jsonl",
+      "source_kind": "jsonl",
+      "provenance": {
+        "role": "chunk_input",
+        "source_relationship": "structured_chunk_source"
+      }
+    }
+  ],
+  "jsonl_source_id": "oncotoolkit-her2-2026-jsonl",
+  "citation_source_id": "oncotoolkit-her2-2026-html"
+}

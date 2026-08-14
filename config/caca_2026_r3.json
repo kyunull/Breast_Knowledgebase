@@ -1,0 +1,33 @@
+{
+  "actor": "caca-r3-import",
+  "version": {
+    "id": "caca-breast-cancer-2026-r3",
+    "guideline_id": "caca-breast-cancer",
+    "version_label": "2026年版-r3",
+    "published_at": null
+  },
+  "language": "zh",
+  "authority_level": "primary_guideline",
+  "sources": [
+    {
+      "id": "caca-2026-r3-pdf",
+      "path": "D:\\document\\HER2乳腺癌专病demo项目\\c583d456-9316-4818-b575-b7619748cde3.pdf",
+      "source_kind": "pdf",
+      "provenance": {
+        "role": "citation_source",
+        "source_relationship": "citation_original"
+      }
+    },
+    {
+      "id": "caca-2026-r3-jsonl",
+      "path": "D:\\document\\HER2乳腺癌专病demo项目\\pipeline\\标准文档分块解析\\caca_2026.jsonl",
+      "source_kind": "jsonl",
+      "provenance": {
+        "role": "chunk_input",
+        "source_relationship": "structured_chunk_source"
+      }
+    }
+  ],
+  "jsonl_source_id": "caca-2026-r3-jsonl",
+  "citation_source_id": "caca-2026-r3-pdf"
+}

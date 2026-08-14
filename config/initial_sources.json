@@ -1,0 +1,41 @@
+{
+  "actor": "initial-import",
+  "guideline": {
+    "id": "caca-breast-cancer",
+    "title": "Guidelines for breast cancer diagnosis and treatment by China Anti-Cancer Association (2026 edition)",
+    "title_zh": "中国抗癌协会乳腺癌诊治指南与规范（2026年版）",
+    "publisher": "中国抗癌协会",
+    "language": "zh",
+    "authority_level": "primary_guideline"
+  },
+  "version": {
+    "id": "caca-breast-cancer-2026",
+    "guideline_id": "caca-breast-cancer",
+    "version_label": "2026年版",
+    "published_at": null
+  },
+  "language": "zh",
+  "authority_level": "primary_guideline",
+  "sources": [
+    {
+      "id": "caca-2026-pdf",
+      "path": "D:\\document\\HER2乳腺癌专病demo项目\\c583d456-9316-4818-b575-b7619748cde3.pdf",
+      "source_kind": "pdf",
+      "provenance": {
+        "role": "citation_source",
+        "source_relationship": "citation_original"
+      }
+    },
+    {
+      "id": "caca-2026-jsonl",
+      "path": "D:\\document\\HER2乳腺癌专病demo项目\\pipeline\\标准文档分块解析\\caca_2026.jsonl",
+      "source_kind": "jsonl",
+      "provenance": {
+        "role": "chunk_input",
+        "source_relationship": "structured_chunk_source"
+      }
+    }
+  ],
+  "jsonl_source_id": "caca-2026-jsonl",
+  "citation_source_id": "caca-2026-pdf"
+}

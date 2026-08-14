@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "guideline-knowledgebase"
+version = "0.1.0"
+description = "Local versioned bilingual guideline knowledge base"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi==0.141.1",
+    "llama-index-core==0.14.23",
+    "llama-index-embeddings-huggingface==0.7.0",
+    "llama-index-retrievers-bm25==0.7.1",
+    "uvicorn==0.52.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "httpx==0.28.1",
+    "pytest==8.4.2",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

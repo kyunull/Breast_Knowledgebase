@@ -1,0 +1,41 @@
+{
+  "actor": "initial-import",
+  "guideline": {
+    "id": "gradishar-nccn-breast-cancer",
+    "title": "Breast Cancer, Version 4.2026 (NCCN Guidelines, Gradishar et al.)",
+    "title_zh": null,
+    "publisher": "Journal of the National Comprehensive Cancer Network",
+    "language": "en",
+    "authority_level": "primary_publication"
+  },
+  "version": {
+    "id": "gradishar-nccn-breast-cancer-4-2026",
+    "guideline_id": "gradishar-nccn-breast-cancer",
+    "version_label": "4.2026",
+    "published_at": null
+  },
+  "language": "en",
+  "authority_level": "primary_publication",
+  "sources": [
+    {
+      "id": "gradishar-nccn-v4-2026-pdf",
+      "path": "D:\\document\\HER2乳腺癌专病demo项目\\Gradishar-2026-Breast-cancer-version--nccn-clinica.pdf",
+      "source_kind": "pdf",
+      "provenance": {
+        "role": "citation_source",
+        "source_relationship": "citation_original"
+      }
+    },
+    {
+      "id": "gradishar-nccn-v4-2026-jsonl",
+      "path": "D:\\document\\HER2乳腺癌专病demo项目\\pipeline\\标准文档分块解析\\gradishar_nccn_v4_2026.jsonl",
+      "source_kind": "jsonl",
+      "provenance": {
+        "role": "chunk_input",
+        "source_relationship": "structured_chunk_source"
+      }
+    }
+  ],
+  "jsonl_source_id": "gradishar-nccn-v4-2026-jsonl",
+  "citation_source_id": "gradishar-nccn-v4-2026-pdf"
+}

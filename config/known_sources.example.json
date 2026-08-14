@@ -1,0 +1,39 @@
+{
+  "actor": "replace-with-importer-id",
+  "guideline": {
+    "id": "replace-with-guideline-id",
+    "title": "replace-with-guideline-title",
+    "title_zh": null,
+    "publisher": "replace-with-publisher",
+    "language": "en",
+    "authority_level": "primary_guideline"
+  },
+  "version": {
+    "id": "replace-with-version-id",
+    "guideline_id": "replace-with-guideline-id",
+    "version_label": "replace-with-version-label",
+    "published_at": null
+  },
+  "language": "en",
+  "authority_level": "primary_guideline",
+  "sources": [
+    {
+      "id": "replace-with-document-source-id",
+      "path": "D:\\replace-with-source-folder\\replace-with-source.pdf",
+      "source_kind": "pdf",
+      "provenance": {
+        "role": "citation_source"
+      }
+    },
+    {
+      "id": "replace-with-jsonl-source-id",
+      "path": "D:\\replace-with-source-folder\\replace-with-chunks.jsonl",
+      "source_kind": "jsonl",
+      "provenance": {
+        "role": "chunk_input"
+      }
+    }
+  ],
+  "jsonl_source_id": "replace-with-jsonl-source-id",
+  "citation_source_id": "replace-with-document-source-id"
+}
