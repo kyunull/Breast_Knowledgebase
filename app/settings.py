@@ -4,6 +4,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from app.project_paths import discover_project_root
+
 
 class PathOutsideProjectError(ValueError):
     """Raised when a configured writable path is not below the project root."""
@@ -39,8 +41,8 @@ class Settings:
     bm25_enabled: bool
 
     @classmethod
-    def from_env(cls, project_root: Path) -> "Settings":
-        root = Path(project_root).resolve()
+    def from_env(cls, project_root: Path | None = None) -> "Settings":
+        root = (Path(project_root) if project_root is not None else discover_project_root()).resolve()
         data_dir = _project_path("KB_DATA_DIR", root / "data", root)
         runtime_cache_dir = _project_path(
             "KB_RUNTIME_CACHE_DIR", data_dir / "runtime_cache", root

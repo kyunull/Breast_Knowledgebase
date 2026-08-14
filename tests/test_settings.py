@@ -38,6 +38,12 @@ class SettingsTests(unittest.TestCase):
             with self.assertRaisesRegex(PathOutsideProjectError, "KB_DATA_DIR"):
                 Settings.from_env(PROJECT_ROOT)
 
+    def test_omitted_project_root_is_discovered(self) -> None:
+        with self.clean_environment():
+            settings = Settings.from_env()
+
+        self.assertEqual(PROJECT_ROOT, settings.project_root)
+
     def test_rejects_paths_that_escape_project_with_parent_segments(self) -> None:
         with self.clean_environment(), patch.dict(
             os.environ,
