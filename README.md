@@ -13,7 +13,7 @@
 | Gradishar NCCN Breast Cancer | `gradishar-nccn-breast-cancer-4-2026` | `draft` | 9 | `primary_publication` |
 | OncoToolkit HER2 Breast Cancer | `oncotoolkit-her2-breast-cancer-2026` | `draft` | 31 | `secondary_summary` |
 
-当前 SQLite 中共有 1,744 个分块/节点、882 条版本差异和 3,525 条追加式审计事件。总数包含 CACA active、r2 和 r3 三个不可变历史版本，因此不能把它理解为四份资料的去重分块数。默认检索只使用 `active`，目前仍只检索原 CACA 2026。不要批准 CACA r2；r3 以及其他三个 draft 必须完成人工审核后再批准。
+交付数据包基线共有 1,744 个分块/节点、882 条版本差异和 3,525 条追加式审计事件；首次完成旧路径迁移后会增加 1 条 `project_paths_rebased`，审计总数变为 3,526。节点总数包含 CACA active、r2 和 r3 三个不可变历史版本，因此不能把它理解为四份资料的去重分块数。默认检索只使用 `active`，目前仍只检索原 CACA 2026。不要批准 CACA r2；r3 以及其他三个 draft 必须完成人工审核后再批准。
 
 ## 运行要求
 

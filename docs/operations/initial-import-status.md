@@ -15,7 +15,7 @@
 | NCCN Breast Cancer | `nccn-breast-cancer-6-2026` | `draft` | 786 | `primary_guideline` |
 | OncoToolkit HER2 Breast Cancer | `oncotoolkit-her2-breast-cancer-2026` | `draft` | 31 | `secondary_summary` |
 
-当前数据库实测：4 个 guideline、6 个 version、1,744 个 raw chunk、1,744 个索引节点、882 条版本差异和 3,525 条追加式审计事件。总数包含三个 CACA 历史/候选版本。
+当前数据库实测：4 个 guideline、6 个 version、1,744 个 raw chunk、1,744 个索引节点、882 条版本差异和 3,526 条追加式审计事件，其中 1 条是本次 `project_paths_rebased`。交付数据包迁移前的审计基线为 3,525 条。节点总数包含三个 CACA 历史/候选版本。
 
 默认检索只包含 `active`，因此目前仍只返回原 CACA 2026。CACA r2 是不可变的中间审计记录，保留但不批准。CACA r3 是唯一可考虑替换当前 CACA active 的候选。NCCN、Gradishar 和 OncoToolkit 必须分别审核，互不覆盖；Gradishar 不是 NCCN V6 的历史版本，OncoToolkit 始终是 `secondary_summary`。
 
