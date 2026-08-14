@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from app.project_paths import discover_project_root
@@ -41,10 +41,30 @@ class Settings:
     embedding_batch_size: int
     model_local_files_only: bool
     bm25_enabled: bool
+    embedding_provider: str = "local"
+    embedding_base_url: str | None = None
+    embedding_api_key: str | None = field(default=None, repr=False)
+    embedding_model: str | None = None
+    embedding_dimension: int = 1024
+    embedding_timeout_seconds: float = 30.0
+    embedding_max_retries: int = 2
 
     @classmethod
     def from_env(cls, project_root: Path | None = None) -> "Settings":
         root = (Path(project_root) if project_root is not None else discover_project_root()).resolve()
+        embedding_provider = os.getenv("KB_EMBEDDING_PROVIDER", "local").strip()
+        if embedding_provider not in {"local", "remote"}:
+            raise ValueError("KB_EMBEDDING_PROVIDER must be 'local' or 'remote'")
+        embedding_base_url = os.getenv("KB_EMBEDDING_BASE_URL") or None
+        embedding_api_key = os.getenv("KB_EMBEDDING_API_KEY") or None
+        embedding_model = os.getenv("KB_EMBEDDING_MODEL") or None
+        if embedding_provider == "remote":
+            if embedding_base_url is None:
+                raise ValueError("KB_EMBEDDING_BASE_URL is required in remote mode")
+            if embedding_api_key is None:
+                raise ValueError("KB_EMBEDDING_API_KEY is required in remote mode")
+            if embedding_model is None:
+                raise ValueError("KB_EMBEDDING_MODEL is required in remote mode")
         data_dir = _project_path("KB_DATA_DIR", root / "data", root)
         runtime_cache_dir = _project_path(
             "KB_RUNTIME_CACHE_DIR", data_dir / "runtime_cache", root
@@ -72,6 +92,17 @@ class Settings:
                 os.getenv("KB_MODEL_LOCAL_FILES_ONLY", "false")
             ),
             bm25_enabled=_bool(os.getenv("KB_BM25_ENABLED", "true")),
+            embedding_provider=embedding_provider,
+            embedding_base_url=embedding_base_url,
+            embedding_api_key=embedding_api_key,
+            embedding_model=embedding_model,
+            embedding_dimension=_positive_int("KB_EMBEDDING_DIMENSION", 1024),
+            embedding_timeout_seconds=_positive_float(
+                "KB_EMBEDDING_TIMEOUT_SECONDS", 30.0
+            ),
+            embedding_max_retries=_nonnegative_int(
+                "KB_EMBEDDING_MAX_RETRIES", 2
+            ),
         )
 
     def ensure_directories(self) -> None:
@@ -141,6 +172,20 @@ def _positive_int(name: str, default: int) -> int:
     value = int(os.getenv(name, str(default)))
     if value < 1:
         raise ValueError(f"{name} must be a positive integer")
+    return value
+
+
+def _nonnegative_int(name: str, default: int) -> int:
+    value = int(os.getenv(name, str(default)))
+    if value < 0:
+        raise ValueError(f"{name} must be a non-negative integer")
+    return value
+
+
+def _positive_float(name: str, default: float) -> float:
+    value = float(os.getenv(name, str(default)))
+    if value <= 0:
+        raise ValueError(f"{name} must be positive")
     return value
 
 

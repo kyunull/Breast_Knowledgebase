@@ -8,6 +8,7 @@ from typing import Mapping
 from llama_index.core.base.embeddings.base import BaseEmbedding
 
 from app.contracts import GuidelineInput, SearchRequest, SearchResponse, VersionRecord
+from app.embeddings import RemoteEmbedding
 from app.index_store import IndexSnapshotStore, SnapshotInfo
 from app.lifecycle import GuidelineIngestRequest, GuidelineLifecycle
 from app.registry import Registry
@@ -148,6 +149,17 @@ class GuidelineService:
 
     def _get_embed_model(self) -> BaseEmbedding:
         if self._embed_model is None:
+            if self.settings.embedding_provider == "remote":
+                self._embed_model = RemoteEmbedding(
+                    base_url=self.settings.embedding_base_url or "",
+                    api_key=self.settings.embedding_api_key or "",
+                    model_name=self.settings.embedding_model or "",
+                    dimension=self.settings.embedding_dimension,
+                    embed_batch_size=self.settings.embedding_batch_size,
+                    timeout_seconds=self.settings.embedding_timeout_seconds,
+                    max_retries=self.settings.embedding_max_retries,
+                )
+                return self._embed_model
             model_options: dict[str, object] = {
                 "local_files_only": self.settings.model_local_files_only,
             }
@@ -166,6 +178,12 @@ class GuidelineService:
         return self._embed_model
 
     def _default_model_metadata(self) -> dict[str, object]:
+        if self.settings.embedding_provider == "remote":
+            return {
+                "provider": "remote",
+                "model_name": self.settings.embedding_model,
+                "dimension": self.settings.embedding_dimension,
+            }
         return {
             "provider": "huggingface",
             "model_name": self.settings.model_name,
@@ -175,6 +193,16 @@ class GuidelineService:
         }
 
     def _validate_settings(self) -> None:
+        if self.settings.embedding_provider not in {"local", "remote"}:
+            raise ValueError("embedding provider must be 'local' or 'remote'")
+        if self.settings.embedding_provider == "remote" and not all(
+            (
+                self.settings.embedding_base_url,
+                self.settings.embedding_api_key,
+                self.settings.embedding_model,
+            )
+        ):
+            raise ValueError("remote embedding settings are incomplete")
         project_root = self.settings.project_root.resolve()
         for writable in (
             self.settings.data_dir,
