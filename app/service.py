@@ -183,13 +183,14 @@ class GuidelineService:
                 "provider": "remote",
                 "model_name": self.settings.embedding_model,
                 "dimension": self.settings.embedding_dimension,
+                "normalize": True,
             }
         return {
-            "provider": "huggingface",
+            "provider": "local",
             "model_name": self.settings.model_name,
             "revision": self.settings.model_revision,
-            "device": self.settings.model_device,
-            "max_length": self.settings.model_max_seq_length,
+            "dimension": 1024,
+            "normalize": True,
         }
 
     def _validate_settings(self) -> None:

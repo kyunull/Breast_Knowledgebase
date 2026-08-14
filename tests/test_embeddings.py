@@ -10,8 +10,12 @@ from typing import Iterator
 from unittest.mock import patch
 
 import pytest
+from llama_index.core.schema import TextNode
 
 from app.embeddings import RemoteEmbedding, RemoteEmbeddingError
+from app.constants import VersionStatus
+from app.contracts import VersionRecord
+from app.index_store import IndexSnapshotStore
 from app.service import GuidelineService
 from app.settings import Settings
 
@@ -202,3 +206,44 @@ def test_settings_rejects_unknown_provider_or_remote_mode_without_key(
     with patch.dict(os.environ, {**clean, **environment}, clear=True):
         with pytest.raises(ValueError):
             Settings.from_env(PROJECT_ROOT)
+
+
+def test_remote_embedding_builds_and_loads_a_compatible_snapshot(
+    tmp_path: Path,
+) -> None:
+    with embedding_server(
+        [
+            (200, {"data": [{"index": 0, "embedding": [1, 0]}]}),
+            (200, {"data": [{"index": 0, "embedding": [1, 0]}]}),
+        ]
+    ) as (base_url, _):
+        model = _remote(base_url)
+        store = IndexSnapshotStore(
+            tmp_path / "indices",
+            embed_model=model,
+            model_metadata={
+                "provider": "remote",
+                "model_name": "BAAI/bge-m3",
+                "dimension": 2,
+                "normalize": True,
+            },
+        )
+        version = VersionRecord(
+            id="nccn-v1",
+            guideline_id="nccn",
+            version_label="6.2026",
+            status=VersionStatus.DRAFT,
+            snapshot_path=None,
+            snapshot_manifest_sha256=None,
+            published_at=None,
+            created_at="2026-08-14T00:00:00",
+            approved_at=None,
+        )
+        snapshot = store.build(
+            version,
+            [TextNode(id_="nccn:nccn-v1:chunk:0", text="HER2 evidence")],
+        )
+        loaded = store.load(snapshot)
+        results = loaded.as_retriever(similarity_top_k=1).retrieve("HER2")
+
+    assert results[0].node.node_id == "nccn:nccn-v1:chunk:0"

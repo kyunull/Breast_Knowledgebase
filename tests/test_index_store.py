@@ -75,11 +75,18 @@ def _version() -> VersionRecord:
     )
 
 
-def _store(root: Path) -> IndexSnapshotStore:
+def _store(
+    root: Path, *, provider: str = "mock", dimension: int = 8
+) -> IndexSnapshotStore:
     return IndexSnapshotStore(
         root,
-        embed_model=MockEmbedding(embed_dim=8),
-        model_metadata={"provider": "mock", "model_name": "mock-8", "embed_dim": 8},
+        embed_model=MockEmbedding(embed_dim=dimension),
+        model_metadata={
+            "provider": provider,
+            "model_name": f"{provider}-{dimension}",
+            "dimension": dimension,
+            "normalize": True,
+        },
     )
 
 
@@ -119,7 +126,12 @@ def test_snapshot_build_verify_load_and_retrieve_without_model_download() -> Non
     assert manifest["index_id"] == "nccn:nccn-v6"
     assert manifest["node_count"] == 1
     assert manifest["node_ids"] == ["nccn:nccn-v6:nccn_v6_2026_0000:0"]
-    assert manifest["model"] == {"embed_dim": 8, "model_name": "mock-8", "provider": "mock"}
+    assert manifest["model"] == {
+        "dimension": 8,
+        "model_name": "mock-8",
+        "normalize": True,
+        "provider": "mock",
+    }
     assert list(manifest["component_hashes"]) == sorted(manifest["component_hashes"])
     assert snapshot.manifest_sha256 == sha256(manifest_bytes).hexdigest()
 
@@ -182,6 +194,96 @@ def test_snapshot_build_never_overwrites_a_published_version() -> None:
         store.build(_version(), nodes)
 
     assert (first.path / "manifest.json").read_bytes() == original_manifest
+
+
+@pytest.mark.parametrize(
+    ("provider", "dimension"),
+    [("remote", 8), ("mock", 7)],
+)
+def test_snapshot_load_rejects_embedding_provider_or_dimension_mismatch(
+    provider: str, dimension: int
+) -> None:
+    root = _task_dir() / "indices"
+    snapshot = _store(root).build(
+        _version(), ProvenanceNodeBuilder().build([_chunk()], _context())
+    )
+    incompatible = _store(root, provider=provider, dimension=dimension)
+
+    with pytest.raises(SnapshotIntegrityError, match="model metadata mismatch"):
+        incompatible.load(snapshot)
+
+
+def test_legacy_pinned_local_bge_manifest_remains_compatible() -> None:
+    root = _task_dir() / "indices"
+    local_profile = {
+        "provider": "local",
+        "model_name": "BAAI/bge-m3",
+        "dimension": 1024,
+        "normalize": True,
+        "revision": "5617a9f61b028005a4858fdac845db406aefb181",
+    }
+    store = IndexSnapshotStore(
+        root,
+        embed_model=MockEmbedding(embed_dim=1024),
+        model_metadata=local_profile,
+    )
+    snapshot = store.build(
+        _version(), ProvenanceNodeBuilder().build([_chunk()], _context())
+    )
+    manifest_path = snapshot.path / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["model"] = {
+        "provider": "huggingface",
+        "model_name": "BAAI/bge-m3",
+        "revision": "5617a9f61b028005a4858fdac845db406aefb181",
+        "device": "cpu",
+        "max_length": 512,
+    }
+    legacy_bytes = (
+        json.dumps(
+            manifest,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        + "\n"
+    ).encode("utf-8")
+    manifest_path.write_bytes(legacy_bytes)
+    legacy_snapshot = SnapshotInfo(
+        guideline_id=snapshot.guideline_id,
+        version_id=snapshot.version_id,
+        index_id=snapshot.index_id,
+        path=snapshot.path,
+        node_count=snapshot.node_count,
+        manifest_sha256=sha256(legacy_bytes).hexdigest(),
+    )
+
+    store.verify(legacy_snapshot)
+    assert store.load(legacy_snapshot)
+
+
+def test_manifest_metadata_discards_api_keys() -> None:
+    secret = "manifest-must-not-contain-this"
+    root = _task_dir() / "indices"
+    store = IndexSnapshotStore(
+        root,
+        embed_model=MockEmbedding(embed_dim=8),
+        model_metadata={
+            "provider": "remote",
+            "model_name": "BAAI/bge-m3",
+            "dimension": 8,
+            "normalize": True,
+            "api_key": secret,
+        },
+    )
+
+    snapshot = store.build(
+        _version(), ProvenanceNodeBuilder().build([_chunk()], _context())
+    )
+
+    manifest_bytes = (snapshot.path / "manifest.json").read_bytes()
+    assert secret.encode() not in manifest_bytes
+    assert "api_key" not in json.loads(manifest_bytes)["model"]
 
 
 @pytest.mark.parametrize(

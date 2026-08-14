@@ -23,6 +23,12 @@ class SnapshotIntegrityError(RuntimeError):
     """A persisted LlamaIndex snapshot does not match its signed inventory."""
 
 
+_MODEL_PROFILE_FIELDS = {"provider", "model_name", "dimension", "normalize"}
+_PINNED_LOCAL_MODEL = "BAAI/bge-m3"
+_PINNED_LOCAL_REVISION = "5617a9f61b028005a4858fdac845db406aefb181"
+_PINNED_LOCAL_DIMENSION = 1024
+
+
 @dataclass(frozen=True, slots=True)
 class NodeBuildContext:
     guideline_id: str
@@ -97,7 +103,9 @@ class IndexSnapshotStore:
     ) -> None:
         self._index_root = Path(index_root).resolve()
         self._embed_model = embed_model
-        self._model_metadata = dict(model_metadata)
+        self._model_metadata = _normalize_configured_model_metadata(
+            model_metadata, embed_model
+        )
 
     @property
     def index_root(self) -> Path:
@@ -240,7 +248,8 @@ class IndexSnapshotStore:
             or len(set(node_ids)) != len(node_ids)
         ):
             raise SnapshotIntegrityError("manifest node inventory is invalid")
-        if manifest.get("model") != self._model_metadata:
+        manifest_model = _normalize_manifest_model_metadata(manifest.get("model"))
+        if manifest_model != self._model_metadata:
             raise SnapshotIntegrityError("manifest model metadata mismatch")
 
     def _component_hashes(self, snapshot_path: Path) -> dict[str, str]:
@@ -273,6 +282,92 @@ def _canonical_json_bytes(value: Mapping[str, object]) -> bytes:
     return (
         json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
     ).encode("utf-8")
+
+
+def _normalize_configured_model_metadata(
+    metadata: Mapping[str, object], embed_model: BaseEmbedding
+) -> dict[str, object]:
+    values = dict(metadata)
+    dimension = values.get("dimension", values.get("embed_dim"))
+    if dimension is None:
+        dimension = getattr(embed_model, "dimension", None)
+    if dimension is None:
+        dimension = getattr(embed_model, "embed_dim", None)
+    model_name = values.get("model_name") or getattr(
+        embed_model, "model_name", None
+    )
+    provider = values.get("provider")
+    if provider == "huggingface" and model_name == _PINNED_LOCAL_MODEL:
+        provider = "local"
+    profile = _validated_model_profile(
+        {
+            "provider": provider,
+            "model_name": model_name,
+            "dimension": dimension,
+            "normalize": values.get("normalize", True),
+        }
+    )
+    revision = values.get("revision")
+    if profile["provider"] == "local" and revision is not None:
+        if not isinstance(revision, str) or not revision:
+            raise ValueError("local embedding revision must be a non-empty string")
+        profile["revision"] = revision
+    return profile
+
+
+def _normalize_manifest_model_metadata(value: object) -> dict[str, object]:
+    if not isinstance(value, dict):
+        raise SnapshotIntegrityError("manifest model metadata is invalid")
+    if _MODEL_PROFILE_FIELDS.issubset(value):
+        try:
+            profile = _validated_model_profile(value)
+        except ValueError as exc:
+            raise SnapshotIntegrityError("manifest model metadata is invalid") from exc
+        revision = value.get("revision")
+        if profile["provider"] == "local" and revision is not None:
+            if not isinstance(revision, str) or not revision:
+                raise SnapshotIntegrityError("manifest model metadata is invalid")
+            profile["revision"] = revision
+        return profile
+
+    if (
+        value.get("provider") == "huggingface"
+        and value.get("model_name") == _PINNED_LOCAL_MODEL
+        and value.get("revision") in {None, _PINNED_LOCAL_REVISION}
+    ):
+        return {
+            "provider": "local",
+            "model_name": _PINNED_LOCAL_MODEL,
+            "dimension": _PINNED_LOCAL_DIMENSION,
+            "normalize": True,
+            "revision": _PINNED_LOCAL_REVISION,
+        }
+    raise SnapshotIntegrityError("manifest model metadata is invalid")
+
+
+def _validated_model_profile(value: Mapping[str, object]) -> dict[str, object]:
+    provider = value.get("provider")
+    model_name = value.get("model_name")
+    dimension = value.get("dimension")
+    normalize = value.get("normalize")
+    if not isinstance(provider, str) or not provider:
+        raise ValueError("embedding provider must be a non-empty string")
+    if not isinstance(model_name, str) or not model_name:
+        raise ValueError("embedding model_name must be a non-empty string")
+    if (
+        not isinstance(dimension, int)
+        or isinstance(dimension, bool)
+        or dimension < 1
+    ):
+        raise ValueError("embedding dimension must be a positive integer")
+    if not isinstance(normalize, bool):
+        raise ValueError("embedding normalize must be boolean")
+    return {
+        "provider": provider,
+        "model_name": model_name,
+        "dimension": dimension,
+        "normalize": normalize,
+    }
 
 
 def _require_safe_path_component(value: str, label: str) -> None:
