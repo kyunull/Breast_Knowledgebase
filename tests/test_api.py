@@ -17,7 +17,7 @@ from scripts.ingest_guideline import load_ingest_config
 from scripts.verify_snapshot import verify_registered_snapshot
 
 
-PROJECT_ROOT = Path(r"D:\coding\knowledgebase")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 class LocalApiClient:
@@ -181,18 +181,27 @@ def test_explicit_unknown_search_version_is_a_validation_error() -> None:
     assert "unknown document version" in response.json()["detail"]
 
 
-def test_ingest_rejects_non_d_drive_source_paths() -> None:
+def test_ingest_accepts_existing_absolute_source_paths_outside_project_root(
+    tmp_path: Path,
+) -> None:
     client, _, root = _system()
     payload = _source_payload(root, "nccn-v1", "Evidence")
-    payload["sources"][0]["path"] = r"C:\source\guide.pdf"
+    external_root = tmp_path / "external-sources"
+    external_root.mkdir()
+    source_path = external_root / "guide.pdf"
+    jsonl_path = external_root / "guide.jsonl"
+    source_path.write_bytes(Path(payload["sources"][0]["path"]).read_bytes())
+    jsonl_path.write_bytes(Path(payload["sources"][1]["path"]).read_bytes())
+    assert not external_root.resolve().is_relative_to(PROJECT_ROOT.resolve())
+    payload["sources"][0]["path"] = str(source_path)
+    payload["sources"][1]["path"] = str(jsonl_path)
 
     response = client.post("/ingest", json=payload)
 
-    assert response.status_code == 422
-    assert "D drive" in str(response.json()["detail"])
+    assert response.status_code == 201
 
 
-def test_ingest_rejects_relative_source_paths_even_when_cwd_is_on_d_drive() -> None:
+def test_ingest_rejects_relative_source_paths() -> None:
     client, _, root = _system()
     payload = _source_payload(root, "nccn-v1", "Evidence")
     payload["sources"][0]["path"] = "relative-guide.pdf"
@@ -200,7 +209,7 @@ def test_ingest_rejects_relative_source_paths_even_when_cwd_is_on_d_drive() -> N
     response = client.post("/ingest", json=payload)
 
     assert response.status_code == 422
-    assert "absolute D-drive path" in str(response.json()["detail"])
+    assert "absolute source path" in str(response.json()["detail"])
 
 
 def test_guidelines_diff_and_audit_endpoints_expose_version_governance() -> None:
@@ -247,7 +256,7 @@ def test_cli_config_loader_builds_the_same_validated_ingest_request() -> None:
     assert guideline is None
 
 
-def test_cli_config_loader_rejects_config_outside_the_d_project() -> None:
+def test_cli_config_loader_rejects_config_outside_the_project() -> None:
     try:
         load_ingest_config(Path(r"C:\ingest.json"), project_root=PROJECT_ROOT)
     except ValueError as error:

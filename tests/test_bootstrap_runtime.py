@@ -7,12 +7,18 @@ import uuid
 from pathlib import Path
 
 
-PROJECT_ROOT = Path(r"D:\coding\knowledgebase")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 BOOTSTRAP_SCRIPT = PROJECT_ROOT / "scripts" / "bootstrap_runtime.ps1"
 
 
 class BootstrapRuntimeTests(unittest.TestCase):
-    def test_rejects_c_project_root_before_any_runtime_or_wheel_directory_can_be_created(
+    def test_bootstrap_derives_the_required_root_from_its_own_location(self) -> None:
+        script = BOOTSTRAP_SCRIPT.read_text(encoding="utf-8")
+
+        self.assertIn("$PSScriptRoot", script)
+        self.assertNotIn("D:\\coding\\knowledgebase", script)
+
+    def test_rejects_an_unrelated_project_root_before_any_runtime_or_wheel_directory_can_be_created(
         self,
     ) -> None:
         powershell = shutil.which("powershell.exe")

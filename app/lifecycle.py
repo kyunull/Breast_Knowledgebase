@@ -39,8 +39,6 @@ class GuidelineLifecycle:
         project_root: Path,
     ) -> None:
         self._project_root = Path(project_root).resolve()
-        if self._project_root.drive.upper() != "D:":
-            raise ValueError("project root must be on the D drive")
         self._registry = registry
         self._managed_sources_dir = self._require_project_path(managed_sources_dir)
         self._require_project_path(registry.path)
@@ -190,6 +188,13 @@ class GuidelineLifecycle:
             raise ValueError("request language must match the registered guideline language")
         if request.authority_level is not guideline_authority_level:
             raise ValueError("request authority_level must match the registered guideline authority_level")
+        for source in request.sources:
+            submitted_path = Path(source.path)
+            if not submitted_path.is_absolute():
+                raise ValueError(f"absolute source path required: {submitted_path}")
+            source_path = submitted_path.resolve()
+            if not source_path.is_file():
+                raise FileNotFoundError(source_path)
         sources_by_id = {source.id: source for source in request.sources}
         if len(sources_by_id) != len(request.sources):
             raise ValueError("source IDs must be unique")

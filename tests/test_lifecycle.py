@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 from uuid import uuid4
 
@@ -15,7 +16,7 @@ from app.lifecycle import GuidelineIngestRequest, GuidelineLifecycle
 from app.registry import Registry
 
 
-PROJECT_ROOT = Path(r"D:\coding\knowledgebase")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _task_dir() -> Path:
@@ -229,19 +230,24 @@ def test_diff_failure_does_not_record_ingest_success() -> None:
     assert "ingest_succeeded" not in actions
 
 
-@pytest.mark.parametrize(
-    "managed_root,index_root",
-    [
-        (Path(r"C:\kb-managed"), PROJECT_ROOT / "data" / "runtime_cache" / "safe-indices"),
-        (PROJECT_ROOT / "data" / "runtime_cache" / "safe-managed", Path(r"C:\kb-indices")),
-    ],
-)
-def test_lifecycle_rejects_writable_roots_outside_d_project_before_ingest(
-    managed_root: Path, index_root: Path
+@pytest.mark.parametrize("outside_target", ["managed", "indices"])
+def test_lifecycle_rejects_writable_roots_outside_project_before_ingest(
+    tmp_path: Path, outside_target: str
 ) -> None:
     root = _task_dir()
     registry = Registry(root / "registry.sqlite3")
     registry.initialize()
+    external_root = tmp_path / "outside-project"
+    managed_root = (
+        external_root / "managed"
+        if outside_target == "managed"
+        else PROJECT_ROOT / "data" / "runtime_cache" / "safe-managed"
+    )
+    index_root = (
+        external_root / "indices"
+        if outside_target == "indices"
+        else PROJECT_ROOT / "data" / "runtime_cache" / "safe-indices"
+    )
     store = IndexSnapshotStore(
         index_root,
         embed_model=MockEmbedding(embed_dim=8),
@@ -256,28 +262,31 @@ def test_lifecycle_rejects_writable_roots_outside_d_project_before_ingest(
             project_root=PROJECT_ROOT,
         )
 
-    assert not Path(r"C:\kb-managed").exists()
-    assert not Path(r"C:\kb-indices").exists()
+    assert not (external_root / "managed").exists()
+    assert not (external_root / "indices").exists()
 
 
-def test_lifecycle_rejects_a_c_drive_project_root_without_creating_it() -> None:
-    c_root = Path(r"C:\codex-task4-must-not-exist")
-    registry = Registry(c_root / "registry.sqlite3")
+def test_lifecycle_accepts_a_temporary_project_root_on_a_non_d_drive(
+    tmp_path: Path,
+) -> None:
+    project_root = tmp_path / "portable-project"
+    assert project_root.drive.upper() != "D:"
+    registry = Registry(project_root / "registry.sqlite3")
     store = IndexSnapshotStore(
-        c_root / "indices",
+        project_root / "indices",
         embed_model=MockEmbedding(embed_dim=8),
         model_metadata={"provider": "mock"},
     )
 
-    with pytest.raises(ValueError, match="D drive"):
-        GuidelineLifecycle(
-            registry=registry,
-            managed_sources_dir=c_root / "managed",
-            index_store=store,
-            project_root=c_root,
-        )
+    lifecycle = GuidelineLifecycle(
+        registry=registry,
+        managed_sources_dir=project_root / "managed",
+        index_store=store,
+        project_root=project_root,
+    )
 
-    assert not c_root.exists()
+    assert lifecycle is not None
+    assert not project_root.exists()
 
 
 def test_ingest_rejects_wrong_or_ambiguous_source_roles_before_creating_draft() -> None:
@@ -308,6 +317,46 @@ def test_ingest_rejects_wrong_or_ambiguous_source_roles_before_creating_draft() 
     )
     with pytest.raises(ValueError, match="must identify different sources"):
         lifecycle.ingest(ambiguous, actor="importer")
+
+
+def test_lifecycle_rejects_relative_source_paths_before_creating_draft() -> None:
+    root = _task_dir()
+    registry, lifecycle = _lifecycle(root)
+    request = _request(root, "nccn-v1", "1.2026", "Evidence")
+    relative_source = GuidelineIngestRequest(
+        version=request.version,
+        language=request.language,
+        authority_level=request.authority_level,
+        sources=(replace(request.sources[0], path=Path("pyproject.toml")), request.sources[1]),
+        jsonl_source_id=request.jsonl_source_id,
+        citation_source_id=request.citation_source_id,
+    )
+
+    with pytest.raises(ValueError, match="absolute source path"):
+        lifecycle.ingest(relative_source, actor="importer")
+    with pytest.raises(KeyError):
+        registry.get_version("nccn-v1")
+
+
+def test_lifecycle_rejects_missing_source_paths_before_creating_draft(
+    tmp_path: Path,
+) -> None:
+    root = _task_dir()
+    registry, lifecycle = _lifecycle(root)
+    request = _request(root, "nccn-v1", "1.2026", "Evidence")
+    missing_source = GuidelineIngestRequest(
+        version=request.version,
+        language=request.language,
+        authority_level=request.authority_level,
+        sources=(replace(request.sources[0], path=tmp_path / "missing.pdf"), request.sources[1]),
+        jsonl_source_id=request.jsonl_source_id,
+        citation_source_id=request.citation_source_id,
+    )
+
+    with pytest.raises(FileNotFoundError):
+        lifecycle.ingest(missing_source, actor="importer")
+    with pytest.raises(KeyError):
+        registry.get_version("nccn-v1")
 
 
 @pytest.mark.parametrize(

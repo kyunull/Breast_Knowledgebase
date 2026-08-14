@@ -77,12 +77,8 @@ class GuidelineService:
         for source in request.sources:
             submitted_path = Path(source.path)
             if not submitted_path.is_absolute():
-                raise ValueError(
-                    f"source path must be an absolute D-drive path: {submitted_path}"
-                )
+                raise ValueError(f"absolute source path required: {submitted_path}")
             source_path = submitted_path.resolve()
-            if source_path.drive.upper() != "D:":
-                raise ValueError(f"source path must be on the D drive: {source_path}")
             if not source_path.is_file():
                 raise FileNotFoundError(source_path)
         if guideline is not None:

@@ -3,13 +3,14 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import tempfile
 
 import pytest
 
 from app.source_contract import build_source_contract_report
 
 
-PROJECT_ROOT = Path(r"D:\coding\knowledgebase")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = Path(
     r"D:\document\HER2乳腺癌专病demo项目\pipeline\标准文档分块解析"
 )
@@ -24,11 +25,50 @@ EXPECTED_CACA_SHA256 = (
 )
 
 
-def test_source_contract_rejects_a_report_path_outside_the_d_project() -> None:
+def test_source_contract_rejects_a_report_path_outside_the_project(
+    tmp_path: Path,
+) -> None:
     with pytest.raises(ValueError, match="report path must remain below project root"):
-        build_source_contract_report(
-            {}, report_path=Path(r"C:\outside-project\source-contract-report.json")
+        build_source_contract_report({}, report_path=tmp_path / "source-contract-report.json")
+
+
+def test_source_contract_accepts_existing_absolute_sources_outside_project_root(
+    tmp_path: Path,
+) -> None:
+    source_path = tmp_path / "chunks.jsonl"
+    source_path.write_text(
+        json.dumps(
+            {
+                "chunk_id": "external-chunk",
+                "doc_id": "nccn",
+                "doc_title": "NCCN Breast Cancer",
+                "section_path": "HER2-positive disease",
+                "page_code": "BINV-1",
+                "page_start": 0,
+                "page_end": 0,
+                "block_type": "paragraph",
+                "text": "External source evidence.",
+            }
         )
+        + "\n",
+        encoding="utf-8",
+    )
+    assert not source_path.resolve().is_relative_to(PROJECT_ROOT.resolve())
+    with tempfile.TemporaryDirectory(dir=PROJECT_ROOT) as report_root:
+        report_path = Path(report_root) / "source-contract-report.json"
+        report = build_source_contract_report({"chunks": source_path}, report_path=report_path)
+
+        assert report["files"]["chunks"]["path"] == str(source_path.resolve())
+        assert report_path.is_file()
+
+
+def test_source_contract_rejects_relative_source_paths() -> None:
+    with tempfile.TemporaryDirectory(dir=PROJECT_ROOT) as report_root:
+        with pytest.raises(ValueError, match="absolute source path"):
+            build_source_contract_report(
+                {"chunks": Path("relative-chunks.jsonl")},
+                report_path=Path(report_root) / "source-contract-report.json",
+            )
 
 
 @pytest.mark.skipif(

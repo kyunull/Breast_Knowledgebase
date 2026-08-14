@@ -7,9 +7,7 @@ from pathlib import Path
 from typing import Mapping
 
 from app.ingestion import REQUIRED_CHUNK_FIELDS
-
-
-PROJECT_ROOT = Path(r"D:\coding\knowledgebase").resolve()
+from app.project_paths import discover_project_root
 
 
 def build_source_contract_report(
@@ -20,9 +18,12 @@ def build_source_contract_report(
     all_chunk_ids: list[str] = []
 
     for name, submitted_path in sorted(source_paths.items()):
-        path = Path(submitted_path).resolve()
-        if path.drive.upper() != "D:":
-            raise ValueError(f"{name}: source path must be on the D drive")
+        source_path = Path(submitted_path)
+        if not source_path.is_absolute():
+            raise ValueError(f"{name}: absolute source path required: {source_path}")
+        path = source_path.resolve()
+        if not path.is_file():
+            raise FileNotFoundError(path)
         source_bytes = path.read_bytes()
         records: list[dict[str, object]] = []
         with path.open("r", encoding="utf-8", newline="") as handle:
@@ -74,9 +75,10 @@ def build_source_contract_report(
         "required_fields": list(REQUIRED_CHUNK_FIELDS),
     }
     report_destination = Path(report_path).resolve()
-    if not report_destination.is_relative_to(PROJECT_ROOT):
+    project_root = discover_project_root()
+    if not report_destination.is_relative_to(project_root):
         raise ValueError(
-            f"report path must remain below project root: {PROJECT_ROOT}"
+            f"report path must remain below project root: {project_root}"
         )
     report_destination.parent.mkdir(parents=True, exist_ok=True)
     report_destination.write_text(

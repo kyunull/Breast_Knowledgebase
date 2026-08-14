@@ -8,9 +8,6 @@ from app.service import GuidelineService
 from app.settings import Settings
 
 
-PROJECT_ROOT = Path(r"D:\coding\knowledgebase").resolve()
-
-
 def verify_registered_snapshot(
     service: GuidelineService, version_id: str
 ) -> SnapshotInfo:
@@ -26,7 +23,7 @@ def main() -> int:
     )
     parser.add_argument("--version-id", required=True)
     arguments = parser.parse_args()
-    service = GuidelineService(Settings.from_env(PROJECT_ROOT))
+    service = GuidelineService(Settings.from_env())
     snapshot = verify_registered_snapshot(service, arguments.version_id)
     print(f"verified {snapshot.version_id} {snapshot.manifest_sha256}")
     return 0

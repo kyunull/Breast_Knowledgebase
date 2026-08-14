@@ -5,8 +5,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$requiredProjectRoot = "D:\coding\knowledgebase"
-$resolvedRequiredRoot = (Resolve-Path -LiteralPath $requiredProjectRoot -ErrorAction Stop).Path
+$resolvedRequiredRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..") -ErrorAction Stop).Path
 
 if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
     $ProjectRoot = $resolvedRequiredRoot

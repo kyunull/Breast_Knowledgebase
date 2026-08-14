@@ -9,17 +9,17 @@ from pydantic import ValidationError
 from app.api import IngestModel, to_domain_ingest
 from app.contracts import GuidelineInput
 from app.lifecycle import GuidelineIngestRequest
+from app.project_paths import discover_project_root
 from app.service import GuidelineService
 from app.settings import Settings
 
 
-PROJECT_ROOT = Path(r"D:\coding\knowledgebase").resolve()
-
-
 def load_ingest_config(
-    path: Path, *, project_root: Path = PROJECT_ROOT
+    path: Path, *, project_root: Path | None = None
 ) -> tuple[str, GuidelineIngestRequest, GuidelineInput | None]:
-    root = Path(project_root).resolve()
+    root = (
+        Path(project_root) if project_root is not None else discover_project_root()
+    ).resolve()
     config_path = Path(path).resolve()
     if not config_path.is_relative_to(root):
         raise ValueError(f"config path must resolve below project root: {root}")
@@ -40,7 +40,7 @@ def main() -> int:
     parser.add_argument("--config", required=True, type=Path)
     arguments = parser.parse_args()
     actor, request, guideline = load_ingest_config(arguments.config)
-    service = GuidelineService(Settings.from_env(PROJECT_ROOT))
+    service = GuidelineService(Settings.from_env())
     version = service.ingest(request, actor=actor, guideline=guideline)
     print(version.id)
     return 0
