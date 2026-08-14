@@ -1,6 +1,6 @@
 # Breast Knowledgebase
 
-团队内部测试版乳腺癌指南证据知识库。项目采用 LlamaIndex，不使用 LangChain；支持中英文语义检索与 BM25 混合检索，返回原文、`raw_chunk_id`、来源等级以及 PDF 页码或 HTML 路径。服务只返回可溯源证据，不生成临床结论。
+团队内部测试版乳腺癌指南证据知识库。项目采用 LlamaIndex，暂未使用 LangChain；支持中英文语义检索与 BM25 混合检索，返回原文、`raw_chunk_id`、来源等级以及 PDF 页码或 HTML 路径。服务只返回可溯源证据，不生成临床结论。
 
 ## 当前数据
 
