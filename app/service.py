@@ -15,9 +15,6 @@ from app.retrieval import EvidenceRetriever
 from app.settings import Settings
 
 
-PROJECT_ROOT = Path(r"D:\coding\knowledgebase").resolve()
-
-
 class GuidelineService:
     """Use-case boundary shared by the local API and command-line tools."""
 
@@ -175,8 +172,7 @@ class GuidelineService:
         }
 
     def _validate_settings(self) -> None:
-        if self.settings.project_root.resolve() != PROJECT_ROOT:
-            raise ValueError(f"project root must be {PROJECT_ROOT}")
+        project_root = self.settings.project_root.resolve()
         for writable in (
             self.settings.data_dir,
             self.settings.registry_db_path,
@@ -185,7 +181,7 @@ class GuidelineService:
             self.settings.model_cache_dir,
             self.settings.runtime_cache_dir,
         ):
-            if not Path(writable).resolve().is_relative_to(PROJECT_ROOT):
+            if not Path(writable).resolve().is_relative_to(project_root):
                 raise ValueError(f"writable path must remain below project root: {writable}")
 
 

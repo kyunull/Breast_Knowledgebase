@@ -89,6 +89,23 @@ class SettingsTests(unittest.TestCase):
             self.assertEqual(512, settings.model_max_seq_length)
             self.assertTrue(settings.bm25_enabled)
 
+    def test_model_revision_defaults_to_pinned_revision(self) -> None:
+        with self.clean_environment():
+            settings = Settings.from_env(PROJECT_ROOT)
+
+        self.assertEqual(
+            "5617a9f61b028005a4858fdac845db406aefb181",
+            settings.model_revision,
+        )
+
+    def test_model_revision_environment_override_is_preserved(self) -> None:
+        with self.clean_environment(), patch.dict(
+            os.environ, {"KB_MODEL_REVISION": "custom-revision"}, clear=False
+        ):
+            settings = Settings.from_env(PROJECT_ROOT)
+
+        self.assertEqual("custom-revision", settings.model_revision)
+
     def test_ensure_directories_creates_every_runtime_root(self) -> None:
         with tempfile.TemporaryDirectory(dir=PROJECT_ROOT) as temporary_root:
             root = Path(temporary_root).resolve()

@@ -22,6 +22,8 @@ _RUNTIME_DIRECTORY_VARIABLES = (
     "TORCH_HOME",
 )
 
+_DEFAULT_MODEL_REVISION = "5617a9f61b028005a4858fdac845db406aefb181"
+
 
 @dataclass(frozen=True, slots=True)
 class Settings:
@@ -62,7 +64,7 @@ class Settings:
             ),
             runtime_cache_dir=runtime_cache_dir,
             model_name=os.getenv("KB_MODEL_NAME", "BAAI/bge-m3"),
-            model_revision=os.getenv("KB_MODEL_REVISION") or None,
+            model_revision=os.getenv("KB_MODEL_REVISION") or _DEFAULT_MODEL_REVISION,
             model_device=os.getenv("KB_MODEL_DEVICE", "cpu"),
             model_max_seq_length=_positive_int("KB_MODEL_MAX_SEQ_LENGTH", 512),
             embedding_batch_size=_positive_int("KB_EMBEDDING_BATCH_SIZE", 4),
