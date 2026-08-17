@@ -1,0 +1,54 @@
+{
+  "actor": "nccn-v6-table-ocr-import",
+  "guideline": {
+    "id": "nccn-breast-cancer",
+    "title": "NCCN Clinical Practice Guidelines in Oncology: Breast Cancer",
+    "title_zh": "NCCN 临床实践指南：乳腺癌",
+    "publisher": "National Comprehensive Cancer Network (NCCN)",
+    "language": "en",
+    "authority_level": "primary_guideline"
+  },
+  "version": {
+    "id": "nccn-breast-cancer-6-2026-table-ocr-r1",
+    "guideline_id": "nccn-breast-cancer",
+    "version_label": "6.2026（表格OCR重建 r1）",
+    "published_at": "2026-07-29"
+  },
+  "language": "en",
+  "authority_level": "primary_guideline",
+  "sources": [
+    {
+      "id": "nccn-v6-2026-table-ocr-pdf",
+      "path": "D:\\document\\HER2乳腺癌专病demo项目\\（2026.V6）NCCN临床实践指南：乳腺癌.pdf",
+      "source_kind": "pdf",
+      "provenance": {
+        "role": "citation_source",
+        "source_relationship": "citation_original",
+        "table_ocr_provider": "Tencent Cloud RecognizeTableAccurateOCR",
+        "table_ocr_model": "UseNewModel=true",
+        "candidate_page_count": 52,
+        "table_parent_count": 77,
+        "table_row_count": 687,
+        "pymupdf_fallback_table_count": 46,
+        "report_sha256": "177c36414e735a4a6567af2c5c42aa2897110800cb4f09a743f9d3a5bb17f406"
+      }
+    },
+    {
+      "id": "nccn-v6-2026-table-aware-jsonl",
+      "path": "D:\\coding\\knowledgebase\\data\\staging\\nccn_breast_v6_2026_table_aware.jsonl",
+      "source_kind": "jsonl",
+      "provenance": {
+        "role": "chunk_input",
+        "source_relationship": "structured_chunk_source",
+        "record_count": 1509,
+        "algorithm_records": 552,
+        "text_records": 193,
+        "table_records": 77,
+        "table_row_records": 687,
+        "sha256": "219f99e36944306775b440946820e484bb4133c9fbec93912ca70a131b5e4165"
+      }
+    }
+  ],
+  "jsonl_source_id": "nccn-v6-2026-table-aware-jsonl",
+  "citation_source_id": "nccn-v6-2026-table-ocr-pdf"
+}

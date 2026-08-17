@@ -1,0 +1,53 @@
+{
+  "actor": "caca-table-ocr-import",
+  "guideline": {
+    "id": "caca-breast-cancer",
+    "title": "Chinese Anti-Cancer Association Breast Cancer Guideline (2026 edition)",
+    "title_zh": "中国抗癌协会乳腺癌诊治指南与规范（2026年版）",
+    "publisher": "中国抗癌协会乳腺癌专业委员会",
+    "language": "zh",
+    "authority_level": "primary_guideline"
+  },
+  "version": {
+    "id": "caca-breast-cancer-2026-table-ocr-r1",
+    "guideline_id": "caca-breast-cancer",
+    "version_label": "2026年版（表格OCR重建 r1）",
+    "published_at": null
+  },
+  "language": "zh",
+  "authority_level": "primary_guideline",
+  "sources": [
+    {
+      "id": "caca-2026-table-ocr-pdf",
+      "path": "D:\\document\\HER2乳腺癌专病demo项目\\c583d456-9316-4818-b575-b7619748cde3.pdf",
+      "source_kind": "pdf",
+      "provenance": {
+        "role": "citation_source",
+        "source_relationship": "citation_original",
+        "table_ocr_provider": "Tencent Cloud RecognizeTableAccurateOCR",
+        "table_ocr_model": "UseNewModel=true",
+        "candidate_page_count": 18,
+        "table_parent_count": 32,
+        "table_row_count": 175,
+        "pymupdf_fallback_table_count": 0,
+        "report_sha256": "67edde5f69d662391482e12398aa65de692949a42203c2953a4479cdd1376795"
+      }
+    },
+    {
+      "id": "caca-2026-table-aware-jsonl",
+      "path": "D:\\coding\\knowledgebase\\data\\staging\\caca_breast_2026_table_aware.jsonl",
+      "source_kind": "jsonl",
+      "provenance": {
+        "role": "chunk_input",
+        "source_relationship": "structured_chunk_source",
+        "record_count": 499,
+        "text_records": 292,
+        "table_records": 32,
+        "table_row_records": 175,
+        "sha256": "329da9f2a3bda6ef671b763bc1985fd5c1262753f49e4df935174df52f20e7d6"
+      }
+    }
+  ],
+  "jsonl_source_id": "caca-2026-table-aware-jsonl",
+  "citation_source_id": "caca-2026-table-ocr-pdf"
+}
