@@ -17,7 +17,7 @@
 
 当前本机数据库实测共有 3,637 个分块/节点、2,024 条版本差异和 7,326 条追加式审计事件。节点总数包含 CACA、NCCN 和 CSCO 的不可变历史/候选版本，因此不能把它理解为资料的去重分块数。默认检索只使用 `active`，当前检索 CACA r3 和 CSCO 表格 OCR r1。不要批准 CACA r2 或 NCCN 草稿；NCCN r2、Gradishar 和 OncoToolkit 必须分别完成人工审核后再批准。
 
-当前私有 Release `v0.2.0-internal-test` 的数据包包含 CACA、CSCO、NCCN、Gradishar 和 OncoToolkit 的全部 8 个版本索引，包含 SQLite、托管源文件、staging JSONL 和校验 manifest；不包含 BGE-M3 模型、运行缓存或 wheelhouse。
+当前已获授权的公开预发布 Release `v0.2.0-internal-test` 的数据包包含 CACA、CSCO、NCCN、Gradishar 和 OncoToolkit 的全部 8 个版本索引，包含 SQLite、托管源文件、staging JSONL 和校验 manifest；不包含 BGE-M3 模型、运行缓存或 wheelhouse。
 
 ## 运行要求
 
@@ -26,7 +26,7 @@
 - Git
 - 首次安装依赖和下载本地 BGE-M3 时可联网
 - 建议至少 16 GB 内存和 8 GB 可用磁盘空间
-- 私有仓库和真实资料包的访问权限
+- GitHub 仓库和已获授权的数据包访问权限
 
 项目可以克隆到任意现有绝对路径和任意盘符。程序从代码位置发现项目根目录，不依赖当前工作目录或固定盘符。SQLite、索引、托管源副本、模型、报告、包缓存和临时文件都必须留在当前项目根目录内；只读 PDF、HTML、JSONL 输入可以位于其他绝对路径。
 
@@ -47,7 +47,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap_runtime.ps1
 
 ## 恢复真实数据
 
-真实 PDF、HTML、JSONL、SQLite 和索引不进入 Git。它们通过私有 Release `v0.2.0-internal-test` 的以下文件交付：
+真实 PDF、HTML、JSONL、SQLite 和索引不进入 Git。它们通过已获授权的公开预发布 Release `v0.2.0-internal-test` 的以下文件交付：
 
 ```text
 breast-knowledgebase-data-v0.2.0-internal-test.zip
@@ -190,7 +190,7 @@ Invoke-RestMethod http://127.0.0.1:8000/audit
 ## 安全范围
 
 - 仅供已授权团队成员在受控设备上测试。
-- 真实资料和数据包不得转发到公共仓库或公共 Release。
+- 真实资料和数据包仅可在项目授权范围内使用和转发；当前公开预发布 Release 已获得项目所有者授权。
 - 不得提交 GitHub Token、API key、用户名密码或带凭据的 URL。
 - OncoToolkit 是 `secondary_summary`，不能替代正式指南原文。
 - 所有检索证据都需要由具备资质的人员结合正式来源复核。

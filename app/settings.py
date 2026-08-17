@@ -146,7 +146,14 @@ class Settings:
     def resolve_project_path(self, value: str | Path) -> Path:
         path = Path(value)
         if not path.is_absolute():
-            path = self.project_root / path
+            if path.parts and path.parts[0] == "data":
+                project_path = (self.project_root / path).resolve()
+                if project_path.is_relative_to(self.data_dir.resolve()):
+                    path = project_path
+                else:
+                    path = self.data_dir.joinpath(*path.parts[1:])
+            else:
+                path = self.project_root / path
         resolved = path.resolve()
         if not resolved.is_relative_to(self.project_root):
             raise PathOutsideProjectError(

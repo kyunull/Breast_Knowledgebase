@@ -24,7 +24,7 @@ KB_RUNTIME_CACHE_DIR
 
 ## 2. 数据包与路径迁移
 
-从私有 Release `v0.2.0-internal-test` 下载数据 zip 和 `.sha256`，按 README 校验后解压到 `$ProjectRoot`。数据包包含全部 8 个已注册版本的向量索引和托管源文件，但不包含 BGE-M3 模型；`data/` 不进入 Git。
+从已获授权的公开预发布 Release `v0.2.0-internal-test` 下载数据 zip 和 `.sha256`，按 README 校验后解压到 `$ProjectRoot`。数据包包含全部 8 个已注册版本的向量索引和托管源文件，但不包含 BGE-M3 模型；`data/` 不进入 Git。
 
 服务启动时会检查 SQLite 中的 `document_version.snapshot_path` 和 `source_file.managed_path`：
 

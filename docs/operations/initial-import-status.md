@@ -1,6 +1,6 @@
 # 初始资料导入状态
 
-更新时间：2026-08-14
+更新时间：2026-08-17
 
 本项目已用四份真实资料和对应 JSONL 建立版本独立的 LlamaIndex 快照。项目可以移动到任意绝对目录；可写数据位于当前项目的 `data` 子目录。源文件未被修改，SQLite 中的 `original_path` 仅作为导入来源审计记录。
 
@@ -71,6 +71,6 @@ Invoke-RestMethod `
 - 启用完整真实源契约后，NCCN 已满足新契约；当前唯一失败是尚未重新导入的 Gradishar 上游文件为 8 条、数据库草稿为 9 条。
 - 最新检查中，NCCN r2 已按上游 822 条重新导入；上游 Gradishar 为 8 条而当前 draft 为 9 条；OncoToolkit 31 条及哈希未变化。
 
-现有私有 Release `v0.1.0-internal-test` 的数据包仍是上一轮交付基线，本次运行时数据尚未重新打包发布。
+已获授权的公开预发布 Release `v0.2.0-internal-test` 已重新打包并发布当前运行时数据。数据包包含全部 8 个版本索引、SQLite、托管源文件、staging JSONL 和校验 manifest，不包含 BGE-M3 模型；下载者需按 README 校验 SHA-256 后解压到项目根目录。
 
 完整命令和停止条件见 [本地运行手册](local-runbook.md)。

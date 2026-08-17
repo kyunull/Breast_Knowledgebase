@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import shutil
 
 import pytest
 from llama_index.core.embeddings import MockEmbedding
@@ -20,8 +21,8 @@ from app.service import GuidelineService
 from app.settings import PathOutsideProjectError, Settings
 
 
-def _settings(project_root: Path) -> Settings:
-    data_dir = project_root / "data"
+def _settings(project_root: Path, *, data_dir: Path | None = None) -> Settings:
+    data_dir = data_dir or project_root / "data"
     return Settings(
         project_root=project_root,
         data_dir=data_dir,
@@ -254,4 +255,85 @@ def test_new_ingest_persists_relative_paths_and_resolves_them_for_use(
     service.index_store.verify(snapshot)
     service.approve(version.id, reviewer="reviewer")
     response = service.search(SearchRequest(query="trastuzumab", top_k=1))
+    assert response.evidence[0].raw_chunk_id == "chunks:her2-1"
+
+
+def test_release_data_directory_override_loads_and_searches_relative_snapshots(
+    tmp_path: Path,
+) -> None:
+    project_root = (tmp_path / "portable-project").resolve()
+    project_root.mkdir()
+    source_root = tmp_path / "external-sources"
+    source_root.mkdir()
+    pdf_path = source_root / "guide.pdf"
+    jsonl_path = source_root / "chunks.jsonl"
+    pdf_path.write_bytes(b"%PDF-1.4\nfixture\n")
+    jsonl_path.write_text(
+        json.dumps(
+            {
+                "chunk_id": "her2-1",
+                "doc_id": "nccn",
+                "doc_title": "NCCN Breast Cancer",
+                "section_path": "HER2-positive disease",
+                "page_code": "BINV-1",
+                "page_start": 0,
+                "page_end": 0,
+                "block_type": "paragraph",
+                "text": "Trastuzumab is recommended for HER2-positive disease.",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    source_settings = _settings(project_root)
+    source_service = GuidelineService(
+        source_settings, embed_model=MockEmbedding(embed_dim=8)
+    )
+    version = source_service.ingest(
+        GuidelineIngestRequest(
+            version=VersionInput(
+                id="nccn-v1", guideline_id="nccn", version_label="6.2026"
+            ),
+            language="en",
+            authority_level=AuthorityLevel.PRIMARY_GUIDELINE,
+            sources=(
+                ManagedSourceInput(
+                    id="guide",
+                    path=pdf_path,
+                    source_kind=SourceKind.PDF,
+                    provenance={},
+                ),
+                ManagedSourceInput(
+                    id="chunks",
+                    path=jsonl_path,
+                    source_kind=SourceKind.JSONL,
+                    provenance={},
+                ),
+            ),
+            jsonl_source_id="chunks",
+            citation_source_id="guide",
+        ),
+        actor="importer",
+        guideline=GuidelineInput(
+            id="nccn",
+            title="NCCN Breast Cancer",
+            language="en",
+            authority_level=AuthorityLevel.PRIMARY_GUIDELINE,
+        ),
+    )
+    source_service.approve(version.id, reviewer="reviewer")
+
+    release_data_dir = project_root / "dist" / "release" / "data"
+    shutil.copytree(source_settings.data_dir, release_data_dir)
+    release_settings = _settings(project_root, data_dir=release_data_dir)
+    release_service = GuidelineService(
+        release_settings, embed_model=MockEmbedding(embed_dim=8)
+    )
+
+    snapshot = release_service.snapshot_info(version.id)
+    assert snapshot.path == release_settings.index_root / "nccn" / version.id
+    release_service.index_store.verify(snapshot)
+    response = release_service.search(SearchRequest(query="trastuzumab", top_k=1))
+
+    assert response.resolved_version_ids == (version.id,)
     assert response.evidence[0].raw_chunk_id == "chunks:her2-1"
