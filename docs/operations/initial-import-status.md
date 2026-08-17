@@ -11,7 +11,8 @@
 | CACA 原生效版本 | `caca-breast-cancer-2026` | `superseded` | 270 | `primary_guideline` |
 | CACA 中间审计版本 | `caca-breast-cancer-2026-r2` | `draft` | 324 | `primary_guideline` |
 | CACA 历史结构化版本 | `caca-breast-cancer-2026-r3` | `superseded` | 324 | `primary_guideline` |
-| CACA 表格 OCR 当前版本 | `caca-breast-cancer-2026-table-ocr-r1` | `active` | 499 | `primary_guideline` |
+| CACA 表格 OCR 历史版本 | `caca-breast-cancer-2026-table-ocr-r1` | `superseded` | 499 | `primary_guideline` |
+| CACA 表格 OCR 英文间距规范化当前版本 | `caca-breast-cancer-2026-table-ocr-r2` | `active` | 499 | `primary_guideline` |
 | Gradishar NCCN Breast Cancer | `gradishar-nccn-breast-cancer-4-2026` | `draft` | 9 | `primary_publication` |
 | NCCN Breast Cancer 历史草稿 | `nccn-breast-cancer-6-2026` | `draft` | 786 | `primary_guideline` |
 | NCCN Breast Cancer 更新草稿 | `nccn-breast-cancer-6-2026-r2` | `draft` | 822 | `primary_guideline` |
@@ -19,9 +20,9 @@
 | OncoToolkit HER2 Breast Cancer | `oncotoolkit-her2-breast-cancer-2026` | `draft` | 31 | `secondary_summary` |
 | CSCO 乳腺癌诊疗指南 2026（表格 OCR 重建） | `csco-breast-cancer-2026-table-ocr-r1` | `active` | 1,071 | `primary_guideline` |
 
-当前数据库实测：5 个 guideline、10 个 version、5,645 个 raw chunk、5,645 个索引节点、2,555 条版本差异和 11,355 条追加式审计事件。节点数包含 CACA、NCCN 和 CSCO 的历史/候选版本。
+当前数据库实测：5 个 guideline、11 个 version、6,144 个 raw chunk、6,144 个索引节点、3,054 条版本差异和 12,360 条追加式审计事件。节点数包含 CACA、NCCN 和 CSCO 的历史/候选版本。
 
-默认检索只包含 `active`，因此目前返回 CACA、NCCN 和 CSCO 的表格感知版本。CACA r3 已变为 `superseded`；CACA r2 和旧 NCCN 草稿仍是保留但不批准的审计记录。Gradishar 不是 NCCN V6 的历史版本，OncoToolkit 始终是 `secondary_summary`。
+默认检索只包含 `active`，因此目前返回 CACA、NCCN 和 CSCO 的表格感知版本。CACA 表格 OCR r1 已由 r2 原子替换为 `superseded`；旧 CACA 中间审计 r2 和旧 NCCN 草稿仍是保留但不批准的审计记录。Gradishar 不是 NCCN V6 的历史版本，OncoToolkit 始终是 `secondary_summary`。
 
 ## 已验证能力
 
@@ -31,6 +32,7 @@
 - CACA r3 已由审核人 `dongy` 批准为 `active`，原 CACA 2026 已原子更新为 `superseded`。
 - CSCO 表格 OCR r1 已由审核人 `codex-user-requested` 批准为 `active`；版本包含 1,071 个节点、92 个表格父块和 617 个表格行块。
 - CACA 表格 OCR r1 已由审核人 `codex-user-approved` 批准为 `active`；版本包含 499 个节点、32 个表格父块和 175 个表格行块，manifest 为 `72f224a3446f976c28010d6a1f8f4377930fe88ca1e1be3189791f57174825ad`。
+- CACA 表格 OCR r2 已由审核人 `codex-user-approved-spacing-r2` 批准为 `active`；版本包含 499 个节点、32 个表格父块和 175 个表格行块，manifest 为 `b81dc8b1c2aa185df07506c4a315614b05a95084a0d29cb319b044cb398653f5`。它基于 r1 JSONL 的 13 条记录执行 16 次显式英文间距规范化，输出 JSONL SHA-256 为 `aac41f6c485683900e9eaf5e7a614fa564c05338a181bbf02d8c454cf1765546`，无残留小写英文拆字。
 - NCCN 表格 OCR r1 已由审核人 `codex-user-approved` 批准为 `active`；版本包含 1,509 个节点、77 个表格父块和 687 个表格行块，manifest 为 `c23f1eb36ee0c16d146b6c47cf84c687d64a6ab213fd2164a43ec684c76f4828`。
 - CACA 292 条、NCCN 745 条非表格记录在重建前后顺序及文本 SHA-256 完全一致；CACA 全部表格由腾讯 `Type=1/2` 重建，NCCN 有 46 个复杂表格采用 PyMuPDF 矢量单元格回退。
 - CACA/NCCN 各 3 条表格查询均在前 5 条证据中命中表格父块或行块，检索证据见 `data/reports/table-ocr-retrieval-r1.json`。
@@ -46,7 +48,7 @@
 
 ## 审核顺序
 
-1. CACA r3 已完成审批；复核默认检索只解析到 `caca-breast-cancer-2026-r3`，不要批准 r2。
+1. CACA 表格 OCR r2 已完成审批；复核默认检索只解析到 `caca-breast-cancer-2026-table-ocr-r2`。旧的 `caca-breast-cancer-2026-r2` 仍是未批准的中间审计版本。
 2. 审核 NCCN r2 的 822 条托管 JSONL、PDF 引用、版本差异和抽样查询；保留旧 NCCN 草稿但不要批准。
 3. 启动 API，确认显式检索 NCCN r2 draft 返回 HTTP 422；审核通过后再以真实审核人 ID 批准 r2。
 4. 分别处理 Gradishar 和 OncoToolkit。上游 Gradishar 数量与当前 draft 不一致时，先导入新版本，不直接批准旧 draft。

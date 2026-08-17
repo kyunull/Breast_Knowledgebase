@@ -68,6 +68,19 @@ SecretId/SecretKey 不得写入命令参数、JSON、SQLite、manifest、日志�
 
 本次结果：CACA 为 18 个候选页、32 个父表格、175 个行 chunk、0 个 PyMuPDF 回退；NCCN 为 52 个候选页、77 个父表格、687 个行 chunk、46 个 PyMuPDF 矢量回退。
 
+## CACA 英文 OCR 间距规范化
+
+CACA 的非表格 OCR 文本可能把英文术语拆成孤立字母，例如 `m a x i m u m i n t e n s i t y`。不要用删除所有英文字母空格的正则；作者首字母（`JOHNSTON S R D`）和图标签（`A B C D E`）必须保留。使用显式、可审计的术语规则生成新 JSONL，原 r1 文件和 active 快照保持不变：
+
+```powershell
+& .\.venv\Scripts\python.exe -m scripts.normalize_caca_ocr_spacing `
+  --input-jsonl '.\data\staging\caca_breast_2026_table_aware.jsonl' `
+  --output-jsonl '.\data\staging\caca_breast_2026_table_aware_r2.jsonl' `
+  --report '.\data\reports\caca-ocr-spacing-r2.json'
+```
+
+报告必须记录输入/输出 SHA-256、受影响记录数、规则替换数和残留小写拆字数；本次为 499 条记录、13 条受影响、16 次替换、0 条残留。用 `config/caca_2026_table_ocr_r2.json` 导入并验证新快照后再审批；规范化后的 JSONL 不改变表格父子结构或非文本字段。
+
 ## 导入与验证
 
 ```powershell
@@ -76,12 +89,12 @@ $env:KB_MODEL_LOCAL_FILES_ONLY = 'true'
 $env:KB_MODEL_DEVICE = 'cpu'
 
 & .\.venv\Scripts\python.exe -m scripts.ingest_guideline `
-  --config .\config\caca_2026_table_ocr_r1.json
+  --config .\config\caca_2026_table_ocr_r2.json
 & .\.venv\Scripts\python.exe -m scripts.ingest_guideline `
   --config .\config\nccn_v6_2026_table_ocr_r1.json
 
 & .\.venv\Scripts\python.exe -m scripts.verify_snapshot `
-  --version-id caca-breast-cancer-2026-table-ocr-r1
+  --version-id caca-breast-cancer-2026-table-ocr-r2
 & .\.venv\Scripts\python.exe -m scripts.verify_snapshot `
   --version-id nccn-breast-cancer-6-2026-table-ocr-r1
 ```

@@ -9,7 +9,8 @@
 | CACA 原生效版本 | `caca-breast-cancer-2026` | `superseded` | 270 | `primary_guideline` |
 | CACA 中间审计版本 | `caca-breast-cancer-2026-r2` | `draft` | 324 | `primary_guideline` |
 | CACA 历史结构化版本 | `caca-breast-cancer-2026-r3` | `superseded` | 324 | `primary_guideline` |
-| CACA 表格 OCR 当前版本 | `caca-breast-cancer-2026-table-ocr-r1` | `active` | 499 | `primary_guideline` |
+| CACA 表格 OCR 历史版本 | `caca-breast-cancer-2026-table-ocr-r1` | `superseded` | 499 | `primary_guideline` |
+| CACA 表格 OCR 英文间距规范化当前版本 | `caca-breast-cancer-2026-table-ocr-r2` | `active` | 499 | `primary_guideline` |
 | NCCN Breast Cancer V6.2026 历史草稿 | `nccn-breast-cancer-6-2026` | `draft` | 786 | `primary_guideline` |
 | NCCN Breast Cancer V6.2026 更新草稿 | `nccn-breast-cancer-6-2026-r2` | `draft` | 822 | `primary_guideline` |
 | NCCN Breast Cancer V6.2026 表格 OCR 当前版本 | `nccn-breast-cancer-6-2026-table-ocr-r1` | `active` | 1,509 | `primary_guideline` |
@@ -17,7 +18,7 @@
 | OncoToolkit HER2 Breast Cancer | `oncotoolkit-her2-breast-cancer-2026` | `draft` | 31 | `secondary_summary` |
 | CSCO 乳腺癌诊疗指南 2026（表格 OCR 重建） | `csco-breast-cancer-2026-table-ocr-r1` | `active` | 1,071 | `primary_guideline` |
 
-当前本机数据库实测共有 5 个 guideline、10 个 version、5,645 个分块/节点、2,555 条版本差异和 11,355 条追加式审计事件。节点总数包含不可变历史/候选版本，因此不能把它理解为资料的去重分块数。默认检索只使用 `active`，当前检索 CACA、NCCN 和 CSCO 的表格感知版本。不要批准 CACA r2 或旧 NCCN 草稿；Gradishar 和 OncoToolkit 必须分别完成人工审核后再批准。
+当前本机数据库实测共有 5 个 guideline、11 个 version、6,144 个分块/节点、3,054 条版本差异和 12,360 条追加式审计事件。节点总数包含不可变历史/候选版本，因此不能把它理解为资料的去重分块数。默认检索只使用 `active`，当前检索 CACA、NCCN 和 CSCO 的表格感知版本。不要批准旧的 CACA 中间审计 r2 或旧 NCCN 草稿；Gradishar 和 OncoToolkit 必须分别完成人工审核后再批准。
 
 当前已获授权的公开预发布 Release `v0.2.0-internal-test` 仍是表格重建前的 8 版本数据包。重新发布数据包前必须包含新的 CACA/NCCN table-aware JSONL、两个 active 快照和更新后的 SQLite；任何数据包都不得包含 BGE-M3 模型、运行缓存或 wheelhouse。
 
