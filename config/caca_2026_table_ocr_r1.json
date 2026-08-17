@@ -2,9 +2,9 @@
   "actor": "caca-table-ocr-import",
   "guideline": {
     "id": "caca-breast-cancer",
-    "title": "Chinese Anti-Cancer Association Breast Cancer Guideline (2026 edition)",
+    "title": "Guidelines for breast cancer diagnosis and treatment by China Anti-Cancer Association (2026 edition)",
     "title_zh": "中国抗癌协会乳腺癌诊治指南与规范（2026年版）",
-    "publisher": "中国抗癌协会乳腺癌专业委员会",
+    "publisher": "中国抗癌协会",
     "language": "zh",
     "authority_level": "primary_guideline"
   },
