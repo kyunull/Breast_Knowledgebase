@@ -1,0 +1,49 @@
+{
+  "actor": "csco-table-ocr-import",
+  "guideline": {
+    "id": "csco-breast-cancer",
+    "title": "Guidelines of Chinese Society of Clinical Oncology (CSCO) Breast Cancer (2026 edition)",
+    "title_zh": "中国临床肿瘤学会（CSCO）乳腺癌诊疗指南（2026年版）",
+    "publisher": "中国临床肿瘤学会",
+    "language": "zh",
+    "authority_level": "primary_guideline"
+  },
+  "version": {
+    "id": "csco-breast-cancer-2026-table-ocr-r1",
+    "guideline_id": "csco-breast-cancer",
+    "version_label": "2026年版（表格OCR重建 r1）",
+    "published_at": null
+  },
+  "language": "zh",
+  "authority_level": "primary_guideline",
+  "sources": [
+    {
+      "id": "csco-2026-pdf",
+      "path": "D:\\document\\HER2乳腺癌专病demo项目\\2026CSCO乳腺癌诊疗指南.pdf",
+      "source_kind": "pdf",
+      "provenance": {
+        "role": "citation_source",
+        "source_relationship": "citation_original",
+        "table_ocr_provider": "Tencent Cloud RecognizeTableAccurateOCR",
+        "table_ocr_model": "UseNewModel=true",
+        "table_image_positions": 91,
+        "table_count": 92
+      }
+    },
+    {
+      "id": "csco-2026-table-aware-jsonl",
+      "path": "D:\\coding\\knowledgebase\\data\\staging\\csco_breast_2026_table_aware.jsonl",
+      "source_kind": "jsonl",
+      "provenance": {
+        "role": "chunk_input",
+        "source_relationship": "structured_chunk_source",
+        "record_count": 1071,
+        "text_records": 362,
+        "table_records": 92,
+        "table_row_records": 617
+      }
+    }
+  ],
+  "jsonl_source_id": "csco-2026-table-aware-jsonl",
+  "citation_source_id": "csco-2026-pdf"
+}

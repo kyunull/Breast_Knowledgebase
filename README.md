@@ -13,8 +13,9 @@
 | NCCN Breast Cancer V6.2026 更新草稿 | `nccn-breast-cancer-6-2026-r2` | `draft` | 822 | `primary_guideline` |
 | Gradishar NCCN Breast Cancer | `gradishar-nccn-breast-cancer-4-2026` | `draft` | 9 | `primary_publication` |
 | OncoToolkit HER2 Breast Cancer | `oncotoolkit-her2-breast-cancer-2026` | `draft` | 31 | `secondary_summary` |
+| CSCO 乳腺癌诊疗指南 2026（表格 OCR 重建） | `csco-breast-cancer-2026-table-ocr-r1` | `active` | 1,071 | `primary_guideline` |
 
-当前本机数据库实测共有 2,566 个分块/节点、2,024 条版本差异和 5,177 条追加式审计事件。节点总数包含 CACA 和 NCCN 的不可变历史/候选版本，因此不能把它理解为四份资料的去重分块数。默认检索只使用 `active`，当前只检索 CACA r3。不要批准 CACA r2 或旧 NCCN 草稿；NCCN r2、Gradishar 和 OncoToolkit 必须分别完成人工审核后再批准。
+当前本机数据库实测共有 3,637 个分块/节点、2,024 条版本差异和 7,326 条追加式审计事件。节点总数包含 CACA、NCCN 和 CSCO 的不可变历史/候选版本，因此不能把它理解为资料的去重分块数。默认检索只使用 `active`，当前检索 CACA r3 和 CSCO 表格 OCR r1。不要批准 CACA r2 或 NCCN 草稿；NCCN r2、Gradishar 和 OncoToolkit 必须分别完成人工审核后再批准。
 
 现有私有 Release `v0.1.0-internal-test` 的数据包仍是上一轮交付基线，本次 CACA 审批和 NCCN r2 索引尚未重新打包发布。
 
