@@ -168,3 +168,37 @@ def test_make_node_metadata_keeps_provenance_and_optional_fields() -> None:
     assert metadata["version_id"] == "oncotoolkit-2026"
     assert metadata["authority_level"] == "secondary_summary"
     assert metadata["source_sha256"] == "a" * 64
+
+
+def test_read_jsonl_and_make_node_metadata_preserve_table_ocr_fields(task_dir: Path) -> None:
+    table_metadata = {
+        "table_id": "caca_2026_p026_t01",
+        "table_index": 1,
+        "table_title": "SLNB指征",
+        "table_row_index": 2,
+        "parent_table_chunk_id": "caca_2026_p026_t01",
+        "table_row_count": 11,
+        "table_column_count": 3,
+        "table_cell_count": 21,
+        "source_image": "source-page-026.png",
+        "ocr_confidence_min": 91.5,
+        "ocr_confidence_mean": 98.2,
+    }
+    payload = json.loads((FIXTURES / "nccn.jsonl").read_text(encoding="utf-8"))
+    payload.update(table_metadata)
+    source = task_dir / "table.jsonl"
+    source.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+    chunk = read_jsonl(source, source_file_id="table-source")[0]
+    assert all(json.loads(chunk.locator_json)[key] == value for key, value in table_metadata.items())
+
+    metadata = make_node_metadata(
+        chunk,
+        guideline_id="nccn",
+        version_id="nccn-v6",
+        language="en",
+        authority_level=AuthorityLevel.PRIMARY_GUIDELINE,
+        source_sha256="b" * 64,
+        source_kind=SourceKind.JSONL,
+    )
+    assert all(metadata[key] == value for key, value in table_metadata.items())

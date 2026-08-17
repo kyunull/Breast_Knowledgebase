@@ -23,7 +23,23 @@ REQUIRED_CHUNK_FIELDS = (
     "block_type",
     "text",
 )
-OPTIONAL_CHUNK_FIELDS = ("part", "part_count", "parent_h1", "heading_level")
+OPTIONAL_CHUNK_FIELDS = (
+    "part",
+    "part_count",
+    "parent_h1",
+    "heading_level",
+    "table_id",
+    "table_index",
+    "table_title",
+    "table_row_index",
+    "parent_table_chunk_id",
+    "table_row_count",
+    "table_column_count",
+    "table_cell_count",
+    "source_image",
+    "ocr_confidence_min",
+    "ocr_confidence_mean",
+)
 
 
 class JsonlIngestionError(ValueError):
