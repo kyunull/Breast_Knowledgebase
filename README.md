@@ -17,7 +17,7 @@
 
 当前本机数据库实测共有 3,637 个分块/节点、2,024 条版本差异和 7,326 条追加式审计事件。节点总数包含 CACA、NCCN 和 CSCO 的不可变历史/候选版本，因此不能把它理解为资料的去重分块数。默认检索只使用 `active`，当前检索 CACA r3 和 CSCO 表格 OCR r1。不要批准 CACA r2 或 NCCN 草稿；NCCN r2、Gradishar 和 OncoToolkit 必须分别完成人工审核后再批准。
 
-现有私有 Release `v0.1.0-internal-test` 的数据包仍是上一轮交付基线，本次 CACA 审批和 NCCN r2 索引尚未重新打包发布。
+当前私有 Release `v0.2.0-internal-test` 的数据包包含 CACA、CSCO、NCCN、Gradishar 和 OncoToolkit 的全部 8 个版本索引，包含 SQLite、托管源文件、staging JSONL 和校验 manifest；不包含 BGE-M3 模型、运行缓存或 wheelhouse。
 
 ## 运行要求
 
@@ -47,18 +47,18 @@ powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap_runtime.ps1
 
 ## 恢复真实数据
 
-真实 PDF、HTML、JSONL、SQLite 和索引不进入 Git。它们通过私有 Release `v0.1.0-internal-test` 的以下文件交付：
+真实 PDF、HTML、JSONL、SQLite 和索引不进入 Git。它们通过私有 Release `v0.2.0-internal-test` 的以下文件交付：
 
 ```text
-breast-knowledgebase-data-v0.1.0-internal-test.zip
-breast-knowledgebase-data-v0.1.0-internal-test.zip.sha256
+breast-knowledgebase-data-v0.2.0-internal-test.zip
+breast-knowledgebase-data-v0.2.0-internal-test.zip.sha256
 ```
 
 把两个文件放到项目的 `dist` 目录后校验并解压：
 
 ```powershell
 $ProjectRoot = (Get-Location).Path
-$archive = Join-Path $ProjectRoot 'dist\breast-knowledgebase-data-v0.1.0-internal-test.zip'
+$archive = Join-Path $ProjectRoot 'dist\breast-knowledgebase-data-v0.2.0-internal-test.zip'
 $checksumFile = "$archive.sha256"
 $expected = ((Get-Content -Raw $checksumFile).Trim() -split '\s+')[0].ToLowerInvariant()
 $actual = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
