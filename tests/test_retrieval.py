@@ -334,6 +334,49 @@ def test_custom_bm25_retrieval_uses_chinese_ngrams() -> None:
     assert results[0].score > 0
 
 
+def test_coverage_reserves_one_result_per_guideline_when_top_k_allows_it() -> None:
+    a = NodeWithScore(
+        node=TextNode(id_="a", text="a", metadata={"guideline_id": "caca"}),
+        score=0.2,
+    )
+    b = NodeWithScore(
+        node=TextNode(id_="b", text="b", metadata={"guideline_id": "csco"}),
+        score=0.1,
+    )
+    c = NodeWithScore(
+        node=TextNode(id_="c", text="c", metadata={"guideline_id": "nccn"}),
+        score=0.05,
+    )
+
+    ranked = retrieval_module.ensure_guideline_coverage(
+        [a, b, c], ("caca", "csco", "nccn"), 3
+    )
+
+    assert {item.node.metadata["guideline_id"] for item in ranked} == {
+        "caca",
+        "csco",
+        "nccn",
+    }
+
+
+def test_coverage_does_not_force_guidelines_when_top_k_is_smaller() -> None:
+    a = NodeWithScore(
+        node=TextNode(id_="a", text="a", metadata={"guideline_id": "caca"}),
+        score=0.2,
+    )
+    b = NodeWithScore(
+        node=TextNode(id_="b", text="b", metadata={"guideline_id": "csco"}),
+        score=0.1,
+    )
+
+    ranked = retrieval_module.ensure_guideline_coverage(
+        [a, b], ("caca", "csco", "nccn"), 2
+    )
+
+    assert len(ranked) == 2
+    assert [item.node.node_id for item in ranked] == ["a", "b"]
+
+
 def test_bm25_is_explicitly_reported_when_available() -> None:
     _, _, retriever = _system()
 

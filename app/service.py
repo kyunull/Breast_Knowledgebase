@@ -72,6 +72,7 @@ class GuidelineService:
                 registry=self.registry,
                 index_store=self.index_store,
                 resolve_project_path=self.settings.resolve_project_path,
+                glossary_path=self.settings.data_dir / "retrieval" / "bilingual_terms.json",
             )
         return self._retriever
 

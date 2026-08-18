@@ -4,7 +4,7 @@ from collections import defaultdict
 import math
 from pathlib import Path
 import re
-from typing import Callable, Iterable, Sequence
+from typing import Callable, Iterable, Mapping, Sequence
 
 from llama_index.core.schema import BaseNode, NodeWithScore
 from llama_index.core.indices.vector_store.retrievers import VectorIndexRetriever
@@ -14,7 +14,12 @@ from app.constants import VersionStatus
 from app.contracts import Evidence, SearchRequest, SearchResponse, VersionRecord
 from app.index_store import IndexSnapshotStore, SnapshotInfo
 from app.registry import Registry
-from app.terminology import expand_query, tokenize_query
+from app.terminology import (
+    DEFAULT_SEED_TERMS,
+    expand_query,
+    load_or_build_dictionary,
+    tokenize_query,
+)
 
 try:
     from llama_index.retrievers.bm25 import BM25Retriever
@@ -26,6 +31,10 @@ try:
 except ImportError:  # pragma: no cover - covered by the BM25 availability test.
     bm25s = None
 
+_GLOSSARY_GUIDELINE_IDS = frozenset(
+    {"caca-breast-cancer", "csco-breast-cancer", "nccn-breast-cancer"}
+)
+
 
 class EvidenceRetriever:
     """Retrieve version-scoped source evidence without response synthesis or an LLM."""
@@ -36,12 +45,18 @@ class EvidenceRetriever:
         registry: Registry,
         index_store: IndexSnapshotStore,
         resolve_project_path: Callable[[str | Path], Path] | None = None,
-        glossary_terms: dict[str, tuple[str, ...]] | None = None,
+        glossary_terms: Mapping[str, Sequence[str]] | None = None,
+        glossary_path: Path | None = None,
     ) -> None:
         self._registry = registry
         self._index_store = index_store
         self._resolve_project_path = resolve_project_path or Path
-        self._glossary_terms = glossary_terms or {}
+        self._glossary_terms = {
+            str(key): tuple(str(value) for value in values)
+            for key, values in (glossary_terms or {}).items()
+        }
+        self._glossary_path = Path(glossary_path) if glossary_path else None
+        self._glossary_source_ids: tuple[str, ...] = ()
 
     def search(self, request: SearchRequest) -> SearchResponse:
         versions = self._resolve_versions(request)
@@ -51,7 +66,7 @@ class EvidenceRetriever:
             else ("vector",)
         )
         ranked: list[NodeWithScore] = []
-        query = expand_query(request.query, self._glossary_terms)
+        query = expand_query(request.query, self._load_glossary_terms())
 
         for version in versions:
             index = self._index_store.load(self._snapshot(version))
@@ -77,12 +92,45 @@ class EvidenceRetriever:
             ranked.extend(version_ranked)
 
         ranked.sort(key=lambda item: (-float(item.score or 0.0), item.node.node_id))
-        evidence = tuple(self._to_evidence(item) for item in ranked[: request.top_k])
+        ranked = ensure_guideline_coverage(
+            ranked,
+            tuple(dict.fromkeys(version.guideline_id for version in versions)),
+            request.top_k,
+        )
+        evidence = tuple(self._to_evidence(item) for item in ranked)
         return SearchResponse(
             evidence=evidence,
             resolved_version_ids=tuple(version.id for version in versions),
             retrieval_modes=modes,
         )
+
+    def _load_glossary_terms(self) -> Mapping[str, Sequence[str]]:
+        if self._glossary_path is None:
+            return self._glossary_terms
+        versions = [
+            version
+            for version in self._registry.list_searchable_versions()
+            if version.guideline_id in _GLOSSARY_GUIDELINE_IDS
+        ]
+        source_version_ids = tuple(sorted(version.id for version in versions))
+        if source_version_ids == self._glossary_source_ids and self._glossary_terms:
+            return self._glossary_terms
+        chunks = [
+            chunk
+            for version in versions
+            for chunk in self._registry.list_raw_chunks_for_version(version.id)
+        ]
+        try:
+            self._glossary_terms = load_or_build_dictionary(
+                self._glossary_path,
+                chunks,
+                source_version_ids,
+                seed_terms=DEFAULT_SEED_TERMS,
+            )
+        except (OSError, ValueError, TypeError):
+            self._glossary_terms = dict(DEFAULT_SEED_TERMS)
+        self._glossary_source_ids = source_version_ids
+        return self._glossary_terms
 
     def _resolve_versions(self, request: SearchRequest) -> list[VersionRecord]:
         query = request.query.strip()
@@ -170,6 +218,40 @@ def rrf_merge(
         NodeWithScore(node=nodes[node_id], score=scores[node_id])
         for node_id in sorted(scores, key=lambda value: (-scores[value], value))
     ]
+
+
+def ensure_guideline_coverage(
+    items: Sequence[NodeWithScore],
+    resolved_guideline_ids: Sequence[str],
+    top_k: int,
+) -> list[NodeWithScore]:
+    """Reserve one ranked candidate per resolved guideline when possible."""
+    if top_k <= 0:
+        return []
+    ranked = list(items)
+    guideline_ids = tuple(dict.fromkeys(resolved_guideline_ids))
+    if top_k < len(guideline_ids):
+        return ranked[:top_k]
+
+    first_by_guideline: dict[str, NodeWithScore] = {}
+    for item in ranked:
+        guideline_id = str(item.node.metadata.get("guideline_id", ""))
+        if guideline_id in guideline_ids and guideline_id not in first_by_guideline:
+            first_by_guideline[guideline_id] = item
+
+    selected: list[NodeWithScore] = [
+        first_by_guideline[guideline_id]
+        for guideline_id in guideline_ids
+        if guideline_id in first_by_guideline
+    ]
+    selected_ids = {item.node.node_id for item in selected}
+    for item in ranked:
+        if len(selected) >= top_k:
+            break
+        if item.node.node_id not in selected_ids:
+            selected.append(item)
+            selected_ids.add(item.node.node_id)
+    return selected
 
 
 def bm25_tokenizer(text: str) -> list[str]:

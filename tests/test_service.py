@@ -37,3 +37,17 @@ def test_service_accepts_relocated_non_d_project_root() -> None:
         assert service.settings.project_root == root
         del service
         gc.collect()
+
+
+def test_service_wires_local_glossary_below_data_directory() -> None:
+    with tempfile.TemporaryDirectory() as temporary_root:
+        root = Path(temporary_root).resolve()
+        with clean_kb_environment():
+            settings = Settings.from_env(root)
+            service = GuidelineService(settings, embed_model=MockEmbedding(embed_dim=8))
+            terms = service.retriever._load_glossary_terms()
+
+        assert "乳腺癌" in terms
+        assert (settings.data_dir / "retrieval" / "bilingual_terms.json").is_file()
+        del service
+        gc.collect()
