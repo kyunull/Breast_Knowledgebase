@@ -284,6 +284,56 @@ def test_rrf_is_deterministic_and_deduplicates_by_node_id() -> None:
     assert merged[0].score == merged[1].score
 
 
+def test_bm25_tokenizer_supports_chinese_ngrams_and_drug_tokens() -> None:
+    tokens = retrieval_module.bm25_tokenizer("复发转移 T-DXd 2.5mg")
+
+    assert {"复发", "发转", "转移", "t-dxd", "2.5mg"}.issubset(tokens)
+
+
+def test_filter_positive_bm25_drops_zero_and_nonfinite_scores() -> None:
+    nodes = [TextNode(id_="zero", text="zero"), TextNode(id_="hit", text="hit")]
+    items = [
+        NodeWithScore(node=nodes[0], score=0.0),
+        NodeWithScore(node=nodes[1], score=2.0),
+        NodeWithScore(node=TextNode(id_="nan", text="nan"), score=float("nan")),
+    ]
+
+    assert [item.node.node_id for item in retrieval_module.filter_positive_bm25(items)] == ["hit"]
+
+
+def test_cover_and_empty_nodes_are_not_indexable() -> None:
+    cover = TextNode(
+        id_="cover",
+        text="NCCN Clinical Practice Guidelines",
+        metadata={"page_start": 0, "section_path": "NCCN", "block_type": "text"},
+    )
+    body = TextNode(
+        id_="body",
+        text="Recurrent metastatic disease treatment",
+        metadata={"page_start": 10, "section_path": "BINV-P", "block_type": "algorithm"},
+    )
+    empty = TextNode(id_="empty", text=" ", metadata={"block_type": "paragraph"})
+
+    assert not retrieval_module.is_indexable_node(cover)
+    assert retrieval_module.is_indexable_node(body)
+    assert not retrieval_module.is_indexable_node(empty)
+
+
+def test_custom_bm25_retrieval_uses_chinese_ngrams() -> None:
+    relevant = TextNode(id_="relevant", text="复发转移患者接受治疗")
+    unrelated = TextNode(id_="unrelated", text="乳腺癌筛查和预防")
+
+    results = retrieval_module.retrieve_bm25(
+        [relevant, unrelated],
+        "复发转移",
+        top_k=2,
+    )
+
+    assert results
+    assert results[0].node.node_id == "relevant"
+    assert results[0].score > 0
+
+
 def test_bm25_is_explicitly_reported_when_available() -> None:
     _, _, retriever = _system()
 
