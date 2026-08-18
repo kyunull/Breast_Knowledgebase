@@ -178,8 +178,9 @@ Invoke-RestMethod `
 
 ### 双语与多指南检索规则
 
-- 中文查询会保留原文，并从本地 CSCO、CACA、NCCN active raw chunk 自动生成或更新 `data/retrieval/bilingual_terms.json`，追加已验证的英文别名；不调用外部翻译服务。
+- 中文查询会保留原文，并从本地 CSCO、CACA、NCCN active raw chunk 发现双语候选；只有人工核验白名单或稳定种子中的中英等价关系会进入 `data/retrieval/bilingual_terms.json`。单位、剂量、编号、句子残片和未核验候选只写入 `data/retrieval/bilingual_terms.audit.json`，不参加检索；不调用外部翻译服务。
 - 多个空格或标点分隔的关键词分别扩展。例如 `复发转移 疗法` 会同时保留中文并追加 `recurrent metastatic`、`therapy`、`treatment`。
+- 中文术语按最长且不重叠的子串匹配，ASCII/英文术语按词边界匹配，避免 `HER2` 误命中 `ER` 这类短缩写；一个英文缩写若对应多个中文概念（例如 `ADC`），不会在单独查询时盲目展开。
 - `use_bm25=true` 时使用中文字符二元/三元组、英文词、药名缩写和剂量 token；BM25 原始分数小于等于 0 的候选不会进入融合。
 - 封面、版权页、编委名单、目录和空白节点保留在原始 JSONL 及 citation 数据中，但不参加普通向量/BM25 排名。它们的过滤发生在查询时，因此这类调整不需要重新向量化。
 - 当 `top_k` 不小于当前过滤范围内的指南数量时，结果会尽量为每个有命中候选的指南保留至少一条证据；`top_k` 较小时不强行补齐。
@@ -191,7 +192,7 @@ $env:KB_MODEL_LOCAL_FILES_ONLY = 'true'
 & .\.venv\Scripts\python.exe scripts\verify_multilingual_retrieval.py
 ```
 
-报告写入 `data/reports/retrieval-multilingual-r1.json`，词典写入 `data/retrieval/bilingual_terms.json`。两者均不包含模型权重或凭据。
+报告写入 `data/reports/retrieval-multilingual-r1.json`，词典写入 `data/retrieval/bilingual_terms.json`，词典审计写入 `data/retrieval/bilingual_terms.audit.json`。这些文件均不包含模型权重或凭据。运行 `\.venv\Scripts\python.exe scripts\audit_bilingual_terms.py` 检查词典的双向一致性和禁用模式。
 
 ## 审核与批准
 
