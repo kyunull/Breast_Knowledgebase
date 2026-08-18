@@ -49,7 +49,7 @@ DEFAULT_SEED_TERMS: dict[str, tuple[str, ...]] = {
     "风险": ("risk",),
 }
 
-_SCHEMA_VERSION = 1
+_SCHEMA_VERSION = 2
 _ASCII_TOKEN = re.compile(r"[A-Za-z0-9]+(?:[./+_-][A-Za-z0-9]+)*")
 _CHINESE_RUN = re.compile(r"[\u3400-\u9fff]+")
 _ZH_PAREN = re.compile(
@@ -126,12 +126,15 @@ def build_bilingual_dictionary(
         text = chunk.text
         for match in _ZH_PAREN.finditer(text):
             chinese = _clean_term(match.group("zh"))
+            if not 2 <= len(chinese) <= 16:
+                continue
             for alias in _split_aliases(match.group("inside")):
                 _add_alias(aliases, chinese, alias)
         for match in _EN_PAREN.finditer(text):
             english = _clean_term(match.group("en"))
             chinese = _clean_term(match.group("zh"))
-            _add_alias(aliases, english, chinese)
+            if _is_english_alias(english):
+                _add_alias(aliases, english, chinese)
 
     return {
         key: tuple(sorted(values, key=lambda value: (value.casefold(), value)))
@@ -186,11 +189,23 @@ def _add_alias(aliases: dict[str, set[str]], source: str, target: str) -> None:
 
 def _split_aliases(value: str) -> list[str]:
     pieces = re.split(r"[，,;；]", value)
-    return [cleaned for piece in pieces if (cleaned := _clean_term(piece)) and re.search(r"[A-Za-z]", cleaned)]
+    return [
+        cleaned
+        for piece in pieces
+        if (cleaned := _clean_term(piece)) and _is_english_alias(cleaned)
+    ]
 
 
 def _clean_term(value: str) -> str:
     return " ".join(value.strip(" \t\r\n:：;；,，") .split())
+
+
+def _is_english_alias(value: str) -> bool:
+    if len(value) > 80 or not re.match(r"^[A-Za-z]", value):
+        return False
+    if not re.search(r"[A-Za-z]{2}", value):
+        return False
+    return not any("\u3400" <= character <= "\u9fff" for character in value)
 
 
 def _normalize_terms(terms: Mapping[str, Sequence[str]]) -> dict[str, tuple[str, ...]]:

@@ -174,6 +174,23 @@ Invoke-RestMethod `
 
 响应包含 `evidence[].text`、`raw_chunk_id`、`authority_level`、`citation`、`resolved_version_ids` 和 `retrieval_modes`，不包含生成式 `answer` 字段。
 
+### 双语与多指南检索规则
+
+- 中文查询会保留原文，并从本地 CSCO、CACA、NCCN active raw chunk 自动生成或更新 `data/retrieval/bilingual_terms.json`，追加已验证的英文别名；不调用外部翻译服务。
+- 多个空格或标点分隔的关键词分别扩展。例如 `复发转移 疗法` 会同时保留中文并追加 `recurrent metastatic`、`therapy`、`treatment`。
+- `use_bm25=true` 时使用中文字符二元/三元组、英文词、药名缩写和剂量 token；BM25 原始分数小于等于 0 的候选不会进入融合。
+- 封面、版权页、编委名单、目录和空白节点保留在原始 JSONL 及 citation 数据中，但不参加普通向量/BM25 排名。它们的过滤发生在查询时，因此这类调整不需要重新向量化。
+- 当 `top_k` 不小于当前过滤范围内的指南数量时，结果会尽量为每个有命中候选的指南保留至少一条证据；`top_k` 较小时不强行补齐。
+
+真实数据验收可运行：
+
+```powershell
+$env:KB_MODEL_LOCAL_FILES_ONLY = 'true'
+& .\.venv\Scripts\python.exe scripts\verify_multilingual_retrieval.py
+```
+
+报告写入 `data/reports/retrieval-multilingual-r1.json`，词典写入 `data/retrieval/bilingual_terms.json`。两者均不包含模型权重或凭据。
+
 ## 审核与批准
 
 先查看版本和审计：

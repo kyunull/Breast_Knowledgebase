@@ -107,6 +107,25 @@ Invoke-RestMethod `
 
 响应只能包含证据、实际版本和检索模式。每条证据必须有原文、`raw_chunk_id`、来源等级和 citation；没有 `answer` 字段。
 
+### 双语检索、噪声过滤和词典
+
+服务首次检索或 active 版本集合变化时，会扫描本地 CSCO、CACA、NCCN raw chunk，生成带源版本指纹的：
+
+```text
+data/retrieval/bilingual_terms.json
+```
+
+中文输入会保留原词并追加本地词典中的英文别名；例如 `复发转移 疗法` 会按两个关键词分别扩展。`use_bm25=true` 时，BM25 使用中文字符 n-gram，并过滤原始分数小于等于 0 的候选。封面、版权页、目录、编委名单和空白节点仍保留在原始 JSONL 中，只在查询时排除，因此不需要重新计算向量。
+
+多指南查询在 `top_k` 足够时会尽量覆盖每个已解析且实际有候选的指南。固定验收脚本：
+
+```powershell
+$env:KB_MODEL_LOCAL_FILES_ONLY = 'true'
+& .\.venv\Scripts\python.exe scripts\verify_multilingual_retrieval.py
+```
+
+结果报告位于 `data/reports/retrieval-multilingual-r1.json`。该脚本只读取现有快照，不修改 SQLite、JSONL 或向量索引。
+
 ## 6. 导入 draft
 
 导入配置必须位于当前项目内，源文件路径必须是已存在的绝对路径。`jsonl_source_id` 指向 JSONL，`citation_source_id` 指向 PDF 或 HTML。

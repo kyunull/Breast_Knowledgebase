@@ -63,6 +63,12 @@ def test_build_dictionary_extracts_parenthesized_bilingual_terms_and_reverse_ali
     assert "表观扩散系数" in terms["ADC"]
 
 
+def test_build_dictionary_ignores_numeric_dose_parentheses():
+    terms = build_bilingual_dictionary([_raw_chunk("建议钙（1 000 mg/d）")], seed_terms={})
+
+    assert "建议钙" not in terms
+
+
 def test_load_or_build_dictionary_reuses_matching_source_fingerprint(tmp_path):
     path = tmp_path / "bilingual_terms.json"
     chunks = [_raw_chunk("乳腺癌（breast cancer）")]
