@@ -119,7 +119,7 @@ def main() -> int:
     )
     parser.add_argument("--project-root", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--output-dir", type=Path, default=None)
-    parser.add_argument("--version", default="v0.2.0-internal-test")
+    parser.add_argument("--version", default="v0.3.0-internal-test")
     arguments = parser.parse_args()
     project_root = arguments.project_root.resolve()
     output_dir = (arguments.output_dir or project_root / "dist").resolve()

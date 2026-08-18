@@ -72,13 +72,13 @@ Invoke-RestMethod `
 
 ## 验证记录
 
-- 严格自动化测试：`111 passed, 1 skipped`。
-- 默认 skip 是需要开发机原始资料的完整真实源契约测试。
+- 严格自动化测试：`155 passed, 4 skipped`。
+- 默认 skip 是需要开发机原始资料或外部 OCR 凭据的真实源契约测试。
 - CACA r3 单源契约：324 条、必填字段完整、`chunk_id` 唯一、固定 SHA-256 一致。
 - NCCN r2 单源契约：822 条、必填字段完整、`chunk_id` 唯一、固定 SHA-256 一致。
 - 启用完整真实源契约后，NCCN 已满足新契约；当前唯一失败是尚未重新导入的 Gradishar 上游文件为 8 条、数据库草稿为 9 条。
 - 最新检查中，NCCN r2 已按上游 822 条重新导入；上游 Gradishar 为 8 条而当前 draft 为 9 条；OncoToolkit 31 条及哈希未变化。
 
-已获授权的公开预发布 Release `v0.2.0-internal-test` 仍是本次 CACA/NCCN 表格重建前的数据包。重新发布时必须包含 10 个版本的 SQLite、托管源文件、staging JSONL、两个新增向量快照和校验 manifest，且不得包含 BGE-M3 模型。
+当前已获授权的公开预发布 Release `v0.3.0-internal-test` 包含 11 个版本的 SQLite、托管源文件、staging JSONL、已注册向量快照和校验 manifest；不包含 BGE-M3 模型、运行缓存或 wheelhouse。
 
 完整命令和停止条件见 [本地运行手册](local-runbook.md) 和 [表格感知 OCR 工作流](table-aware-ocr-workflow.md)。

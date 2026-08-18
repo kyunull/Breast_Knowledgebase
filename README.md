@@ -20,7 +20,7 @@
 
 当前本机数据库实测共有 5 个 guideline、11 个 version、6,144 个分块/节点、3,054 条版本差异和 12,360 条追加式审计事件。节点总数包含不可变历史/候选版本，因此不能把它理解为资料的去重分块数。默认检索只使用 `active`，当前检索 CACA、NCCN 和 CSCO 的表格感知版本。不要批准旧的 CACA 中间审计 r2 或旧 NCCN 草稿；Gradishar 和 OncoToolkit 必须分别完成人工审核后再批准。
 
-当前已获授权的公开预发布 Release `v0.2.0-internal-test` 仍是表格重建前的 8 版本数据包。重新发布数据包前必须包含新的 CACA/NCCN table-aware JSONL、两个 active 快照和更新后的 SQLite；任何数据包都不得包含 BGE-M3 模型、运行缓存或 wheelhouse。
+当前已获授权的公开预发布 Release `v0.3.0-internal-test` 包含当前 SQLite 中的 11 个版本、CACA/CSCO/NCCN 表格感知 OCR JSONL 与全部已注册快照。默认检索使用 CACA、CSCO、NCCN 的三份 active 表格 OCR 版本，并支持本地双语术语扩展、中文 n-gram BM25、前置页过滤和多指南覆盖。数据包不包含 BGE-M3 模型、运行缓存或 wheelhouse。
 
 ## 运行要求
 
@@ -50,18 +50,20 @@ powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap_runtime.ps1
 
 ## 恢复真实数据
 
-真实 PDF、HTML、JSONL、SQLite 和索引不进入 Git。它们通过已获授权的公开预发布 Release `v0.2.0-internal-test` 的以下文件交付：
+真实 PDF、HTML、JSONL、SQLite 和索引不进入 Git。它们通过已获授权的公开预发布 Release `v0.3.0-internal-test` 的以下文件交付：
+
+发布页：[v0.3.0-internal-test](https://github.com/kyunull/Breast_Knowledgebase/releases/tag/v0.3.0-internal-test)
 
 ```text
-breast-knowledgebase-data-v0.2.0-internal-test.zip
-breast-knowledgebase-data-v0.2.0-internal-test.zip.sha256
+breast-knowledgebase-data-v0.3.0-internal-test.zip
+breast-knowledgebase-data-v0.3.0-internal-test.zip.sha256
 ```
 
 把两个文件放到项目的 `dist` 目录后校验并解压：
 
 ```powershell
 $ProjectRoot = (Get-Location).Path
-$archive = Join-Path $ProjectRoot 'dist\breast-knowledgebase-data-v0.2.0-internal-test.zip'
+$archive = Join-Path $ProjectRoot 'dist\breast-knowledgebase-data-v0.3.0-internal-test.zip'
 $checksumFile = "$archive.sha256"
 $expected = ((Get-Content -Raw $checksumFile).Trim() -split '\s+')[0].ToLowerInvariant()
 $actual = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
