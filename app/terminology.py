@@ -15,10 +15,12 @@ DEFAULT_SEED_TERMS: dict[str, tuple[str, ...]] = {
     "复发": ("recurrent", "recurrence"),
     "转移": ("metastatic", "metastasis"),
     "淋巴转移": ("lymph node metastasis", "nodal metastasis"),
+    "淋巴结转移": ("lymph node metastasis", "nodal metastasis"),
     "高危": ("high risk", "high-risk"),
     "复发转移": ("recurrent metastatic", "recurrent or metastatic"),
     "复发转移性乳腺癌": ("recurrent metastatic breast cancer",),
     "晚期乳腺癌": ("advanced breast cancer",),
+    "晚期": ("advanced", "advanced-stage"),
     "转移性乳腺癌": ("metastatic breast cancer",),
     "疗法": ("therapy", "treatment"),
     "治疗": ("treatment", "therapy"),
@@ -251,6 +253,24 @@ _ASCII_TOKEN = re.compile(r"[A-Za-z0-9]+(?:[./+_-][A-Za-z0-9]+)*")
 _AMBIGUOUS_ASCII_ALIAS_PATTERN = re.compile(
     r"[A-Z0-9][A-Z0-9-]{1,3}", re.IGNORECASE
 )
+_QUERY_STOPWORDS = frozenset(
+    {
+        "and",
+        "or",
+        "with",
+        "without",
+        "of",
+        "the",
+        "a",
+        "an",
+        "in",
+        "for",
+        "to",
+        "on",
+    }
+)
+_QUERY_GROUP_CONNECTORS = frozenset({"and", "or", "with", "without"})
+_QUERY_GROUP_PUNCTUATION = "，,;；。:："
 _CHINESE_RUN = re.compile(r"[\u3400-\u9fff]+")
 _MEASUREMENT_UNIT = re.compile(
     r"(?i)^(?:mmol|mol|mg|mcg|ug|g|kg|ml|l|cm|mm|hz|khz|mhz)"
@@ -370,6 +390,93 @@ def expand_query(query: str, terms: Mapping[str, Sequence[str]]) -> str:
             expanded.append(cleaned)
             seen.add(cleaned.casefold())
     return " ".join(expanded)
+
+
+def query_concept_groups(
+    query: str,
+    terms: Mapping[str, Sequence[str]],
+) -> tuple[tuple[str, ...], ...]:
+    """Return matched bilingual concept groups for strict multi-keyword search."""
+    original = " ".join(query.strip().split())
+    if not original:
+        return ()
+    groups_with_spans: list[tuple[int, tuple[str, ...]]] = []
+    matches = _select_query_term_matches(original, terms, original.casefold())
+    covered_spans = [(start, end) for _, start, end in matches]
+    for key, start, _ in matches:
+        variants = [key, *terms.get(key, ())]
+        if key == "淋巴转移":
+            variants.extend(
+                (
+                    "淋巴结转移",
+                    "腋窝淋巴结转移",
+                    "区域淋巴结转移",
+                    "淋巴结阳性",
+                    "腋窝淋巴结阳性",
+                )
+            )
+        cleaned = tuple(
+            dict.fromkeys(
+                " ".join(str(value).split())
+                for value in variants
+                if str(value).strip()
+            )
+        )
+        if cleaned:
+            groups_with_spans.append((start, cleaned))
+
+    # Unrecognized Chinese tokens remain separate concepts. Consecutive ASCII
+    # tokens form one phrase because whitespace is part of normal English text.
+    ascii_phrase: list[str] = []
+    ascii_phrase_start: int | None = None
+
+    def flush_ascii_phrase() -> None:
+        nonlocal ascii_phrase_start
+        if ascii_phrase and ascii_phrase_start is not None:
+            groups_with_spans.append((ascii_phrase_start, (" ".join(ascii_phrase),)))
+        ascii_phrase.clear()
+        ascii_phrase_start = None
+
+    for token_match in re.finditer(r"\S+", original):
+        if any(
+            token_match.start() < end and start < token_match.end()
+            for start, end in covered_spans
+        ):
+            flush_ascii_phrase()
+            continue
+
+        raw_token = token_match.group(0)
+        has_leading_separator = raw_token[0] in _QUERY_GROUP_PUNCTUATION
+        has_trailing_separator = raw_token[-1] in _QUERY_GROUP_PUNCTUATION
+        if has_leading_separator:
+            flush_ascii_phrase()
+        token = raw_token.strip(_QUERY_GROUP_PUNCTUATION)
+        lowered_token = token.casefold()
+
+        if lowered_token in _QUERY_GROUP_CONNECTORS:
+            flush_ascii_phrase()
+            continue
+        if _CHINESE_RUN.search(token):
+            flush_ascii_phrase()
+            if len(token) >= 2:
+                groups_with_spans.append((token_match.start(), (token,)))
+        elif _ASCII_TOKEN.fullmatch(token) and lowered_token not in _QUERY_STOPWORDS:
+            if ascii_phrase_start is None:
+                ascii_phrase_start = token_match.start()
+            ascii_phrase.append(token)
+        elif _ASCII_TOKEN.fullmatch(token) and ascii_phrase:
+            ascii_phrase.append(token)
+        else:
+            flush_ascii_phrase()
+
+        if has_trailing_separator:
+            flush_ascii_phrase()
+
+    flush_ascii_phrase()
+
+    return tuple(
+        group for _, group in sorted(groups_with_spans, key=lambda item: item[0])
+    )
 
 
 def _select_query_term_matches(
@@ -917,6 +1024,7 @@ __all__ = [
     "audit_bilingual_dictionary",
     "build_bilingual_dictionary",
     "expand_query",
+    "query_concept_groups",
     "load_or_build_dictionary",
     "tokenize_query",
 ]

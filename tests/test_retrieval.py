@@ -334,6 +334,27 @@ def test_custom_bm25_retrieval_uses_chinese_ngrams() -> None:
     assert results[0].score > 0
 
 
+def test_filter_query_concept_matches_requires_all_concepts():
+    both = TextNode(id_="both", text="晚期乳腺癌伴淋巴结转移")
+    only_advanced = TextNode(id_="advanced", text="晚期乳腺癌治疗")
+    only_lymph = TextNode(id_="lymph", text="淋巴结转移评估")
+    groups = (
+        ("淋巴转移", "淋巴结转移", "lymph node metastasis"),
+        ("晚期", "advanced"),
+    )
+
+    filtered = retrieval_module.filter_query_concept_matches(
+        [
+            NodeWithScore(node=both, score=0.3),
+            NodeWithScore(node=only_advanced, score=0.2),
+            NodeWithScore(node=only_lymph, score=0.1),
+        ],
+        groups,
+    )
+
+    assert [item.node.node_id for item in filtered] == ["both"]
+
+
 def test_coverage_reserves_one_result_per_guideline_when_top_k_allows_it() -> None:
     a = NodeWithScore(
         node=TextNode(id_="a", text="a", metadata={"guideline_id": "caca"}),

@@ -180,6 +180,7 @@ Invoke-RestMethod `
 
 - 中文查询会保留原文，并从本地 CSCO、CACA、NCCN active raw chunk 发现双语候选；只有人工核验白名单或稳定种子中的中英等价关系会进入 `data/retrieval/bilingual_terms.json`。单位、剂量、编号、句子残片和未核验候选只写入 `data/retrieval/bilingual_terms.audit.json`，不参加检索；不调用外部翻译服务。
 - 多个空格或标点分隔的关键词分别扩展。例如 `复发转移 疗法` 会同时保留中文并追加 `recurrent metastatic`、`therapy`、`treatment`。
+- 多个关键词默认按 AND 处理：查询 `淋巴转移 晚期` 时，证据必须在同一 chunk 中同时覆盖淋巴结转移相关变体和晚期相关变体；只命中其中一个词的 CACA/CSCO/NCCN 内容不会被补入结果。若没有同一 chunk 同时命中，结果可以少于 `top_k`，这是精确性保护，不会静默降级为 OR。
 - 中文术语按最长且不重叠的子串匹配，ASCII/英文术语按词边界匹配，避免 `HER2` 误命中 `ER` 这类短缩写；一个英文缩写若对应多个中文概念（例如 `ADC`），不会在单独查询时盲目展开。
 - `use_bm25=true` 时使用中文字符二元/三元组、英文词、药名缩写和剂量 token；BM25 原始分数小于等于 0 的候选不会进入融合。
 - 封面、版权页、编委名单、目录和空白节点保留在原始 JSONL 及 citation 数据中，但不参加普通向量/BM25 排名。它们的过滤发生在查询时，因此这类调整不需要重新向量化。

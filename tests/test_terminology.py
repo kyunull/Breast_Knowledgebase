@@ -11,6 +11,7 @@ from app.terminology import (
     audit_bilingual_dictionary,
     build_bilingual_dictionary,
     expand_query,
+    query_concept_groups,
     load_or_build_dictionary,
     tokenize_query,
 )
@@ -56,6 +57,31 @@ def test_expand_query_longest_match_handles_multiple_separated_keywords():
     assert expanded.startswith("复发转移 疗法")
     assert "recurrent metastatic breast cancer" in expanded
     assert "therapy" in expanded and "treatment" in expanded
+
+
+def test_query_concept_groups_preserve_and_semantics_for_separated_keywords():
+    terms = {
+        "淋巴转移": ("lymph node metastasis",),
+        "晚期": ("advanced",),
+    }
+
+    groups = query_concept_groups("淋巴转移 晚期", terms)
+
+    assert len(groups) == 2
+    assert {"淋巴转移", "lymph node metastasis"}.issubset(groups[0])
+    assert {"晚期", "advanced"}.issubset(groups[1])
+
+
+def test_query_concept_groups_keep_unrecognized_separated_terms_as_and_groups():
+    groups = query_concept_groups("肝转移 高危", {})
+
+    assert groups == (("肝转移",), ("高危",))
+
+
+def test_query_concept_groups_ignore_english_connectors():
+    groups = query_concept_groups("lymph node metastasis and advanced", {})
+
+    assert groups == (("lymph node metastasis",), ("advanced",))
 
 
 def test_expand_query_suppresses_nested_chinese_terms():

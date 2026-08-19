@@ -18,6 +18,7 @@ from app.terminology import (
     DEFAULT_SEED_TERMS,
     expand_query,
     load_or_build_dictionary,
+    query_concept_groups,
     tokenize_query,
 )
 
@@ -66,7 +67,10 @@ class EvidenceRetriever:
             else ("vector",)
         )
         ranked: list[NodeWithScore] = []
-        query = expand_query(request.query, self._load_glossary_terms())
+        glossary_terms = self._load_glossary_terms()
+        query = expand_query(request.query, glossary_terms)
+        concept_groups = query_concept_groups(request.query, glossary_terms)
+        candidate_k = max(request.top_k * 10, 50) if len(concept_groups) > 1 else request.top_k
 
         for version in versions:
             index = self._index_store.load(self._snapshot(version))
@@ -76,7 +80,7 @@ class EvidenceRetriever:
             vector = (
                 VectorIndexRetriever(
                     index=index,
-                    similarity_top_k=min(request.top_k, len(indexable_ids)),
+                    similarity_top_k=min(candidate_k, len(indexable_ids)),
                     node_ids=indexable_ids,
                     callback_manager=index._callback_manager,
                     object_map=index._object_map,
@@ -85,10 +89,14 @@ class EvidenceRetriever:
                 else []
             )
             if len(modes) == 2:
-                bm25 = retrieve_bm25(indexable_nodes, query, request.top_k)
+                bm25 = retrieve_bm25(indexable_nodes, query, candidate_k)
                 version_ranked = rrf_merge(vector, bm25, k=60)
             else:
                 version_ranked = list(vector)
+            if len(concept_groups) > 1:
+                version_ranked = filter_query_concept_matches(
+                    version_ranked, concept_groups
+                )
             ranked.extend(version_ranked)
 
         ranked.sort(key=lambda item: (-float(item.score or 0.0), item.node.node_id))
@@ -268,6 +276,39 @@ def filter_positive_bm25(items: Sequence[NodeWithScore]) -> list[NodeWithScore]:
         and math.isfinite(float(item.score))
         and float(item.score) > 0.0
     ]
+
+
+def filter_query_concept_matches(
+    items: Sequence[NodeWithScore],
+    concept_groups: Sequence[Sequence[str]],
+) -> list[NodeWithScore]:
+    """Keep candidates that lexically cover every recognized query concept."""
+    if len(concept_groups) <= 1:
+        return list(items)
+    return [
+        item
+        for item in items
+        if all(
+            any(
+                _text_contains_variant(
+                    item.node.get_content(metadata_mode="none"), variant
+                )
+                for variant in group
+            )
+            for group in concept_groups
+        )
+    ]
+
+
+def _text_contains_variant(text: str, variant: str) -> bool:
+    normalized_text = text.casefold()
+    normalized_variant = variant.casefold().strip()
+    if not normalized_variant:
+        return False
+    if re.search(r"[\u3400-\u9fff]", normalized_variant):
+        return normalized_variant in normalized_text
+    pattern = rf"(?<![A-Za-z0-9]){re.escape(normalized_variant)}(?![A-Za-z0-9])"
+    return re.search(pattern, normalized_text) is not None
 
 
 def retrieve_bm25(
