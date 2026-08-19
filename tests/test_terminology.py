@@ -103,6 +103,27 @@ def test_default_terms_do_not_reduce_brain_metastasis_to_generic_metastasis():
     assert "metastasis" not in groups[0]
 
 
+@pytest.mark.parametrize(
+    ("chinese", "english"),
+    (
+        ("一线", "first"),
+        ("二线", "second"),
+        ("三线", "third"),
+        ("四线", "fourth"),
+    ),
+)
+def test_default_terms_expand_treatment_lines_for_cross_language_search(
+    chinese: str,
+    english: str,
+):
+    groups = query_concept_groups(f"曲妥珠单抗 {chinese}", DEFAULT_SEED_TERMS)
+
+    assert groups == (
+        ("曲妥珠单抗", "trastuzumab"),
+        (chinese, f"{english} line", f"{english}-line"),
+    )
+
+
 def test_expand_query_suppresses_nested_chinese_terms():
     terms = {
         "复发": ("recurrence",),
