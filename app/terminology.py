@@ -14,6 +14,7 @@ DEFAULT_SEED_TERMS: dict[str, tuple[str, ...]] = {
     "乳腺癌": ("breast cancer",),
     "复发": ("recurrent", "recurrence"),
     "转移": ("metastatic", "metastasis"),
+    "脑转移": ("brain metastasis", "cerebral metastasis"),
     "淋巴转移": ("lymph node metastasis", "nodal metastasis"),
     "淋巴结转移": ("lymph node metastasis", "nodal metastasis"),
     "高危": ("high risk", "high-risk"),

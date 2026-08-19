@@ -84,6 +84,25 @@ def test_query_concept_groups_ignore_english_connectors():
     assert groups == (("lymph node metastasis",), ("advanced",))
 
 
+def test_query_concept_groups_preserve_brain_metastasis_as_specific_concept():
+    terms = {
+        "转移": ("metastasis",),
+        "晚期": ("advanced",),
+        "脑转移": ("brain metastasis",),
+    }
+
+    groups = query_concept_groups("脑转移 晚期", terms)
+
+    assert groups == (("脑转移", "brain metastasis"), ("晚期", "advanced"))
+
+
+def test_default_terms_do_not_reduce_brain_metastasis_to_generic_metastasis():
+    groups = query_concept_groups("脑转移 晚期", DEFAULT_SEED_TERMS)
+
+    assert groups[0][0] == "脑转移"
+    assert "metastasis" not in groups[0]
+
+
 def test_expand_query_suppresses_nested_chinese_terms():
     terms = {
         "复发": ("recurrence",),
